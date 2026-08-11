@@ -11,6 +11,7 @@ import { expect, test } from "@playwright/test";
 
 const VIEWS = [
   { id: "dashboard", heading: "DASHBOARD" },
+  { id: "chat", heading: "CHAT" },
   { id: "image-forge", heading: "IMAGE FORGE" },
   { id: "video-forge", heading: "VIDEO FORGE" },
   { id: "audio-lab", heading: "AUDIO LAB" },
@@ -142,9 +143,28 @@ test("the language picker switches the console to Ukrainian and remembers it", a
   await expect(page.locator(".nav-item:has-text('Creations')")).toBeVisible();
 });
 
+test("chat finds the model CLIs installed on this machine", async ({ page }) => {
+  await page.goto("/#chat");
+  await expect(page.locator(".intro h1")).toHaveText("CHAT", { timeout: 20_000 });
+
+  // The rail is populated by looking at the machine, so an entry proves the probe ran.
+  const rail = page.locator(".model-rail .tool-pick");
+  await expect(rail.first()).toBeVisible({ timeout: 20_000 });
+  expect(await rail.count()).toBeGreaterThan(1);
+
+  // Availability is shown rather than hidden: every entry carries a light either way.
+  await expect(page.locator(".model-rail .tool-pick .dot").first()).toBeVisible();
+
+  // The composer refuses to send nothing.
+  await expect(page.locator("button:has-text('SEND')")).toBeDisabled();
+  await page.locator("textarea.composer").fill("hello");
+  await expect(page.locator("button:has-text('SEND')")).toBeEnabled();
+});
+
 function labelFor(id: string): string {
   const map: Record<string, string> = {
     dashboard: "Dashboard",
+    chat: "Chat",
     "image-forge": "Image Forge",
     "video-forge": "Video Forge",
     "audio-lab": "Audio Lab",

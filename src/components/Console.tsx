@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { ToastProvider, useJson, num } from "./ui";
 import { LangProvider, LANGS, LANG_LABEL, LANG_NAME, useLang, useT } from "@/lib/i18n";
 import Dashboard from "./views/Dashboard";
+import Chat from "./views/Chat";
 import ImageForge from "./views/ImageForge";
 import VideoForge from "./views/VideoForge";
 import AudioLab from "./views/AudioLab";
@@ -63,7 +64,13 @@ export function useNav() {
 }
 
 const SECTIONS: { title: string; items: { id: string; glyph: string; name: string; sub: string; dot?: boolean }[] }[] = [
-  { title: "OVERVIEW", items: [{ id: "dashboard", glyph: "▦", name: "Dashboard", sub: "Credits · health · queue" }] },
+  {
+    title: "OVERVIEW",
+    items: [
+      { id: "dashboard", glyph: "▦", name: "Dashboard", sub: "Credits · health · queue" },
+      { id: "chat", glyph: "◈", name: "Chat", sub: "Local CLIs · providers · skills" },
+    ],
+  },
   {
     title: "GENERATE",
     items: [
@@ -108,6 +115,7 @@ const SECTIONS: { title: string; items: { id: string; glyph: string; name: strin
 
 const VIEWS: Record<string, () => React.ReactElement> = {
   dashboard: Dashboard,
+  chat: Chat,
   "image-forge": ImageForge,
   "video-forge": VideoForge,
   "audio-lab": AudioLab,

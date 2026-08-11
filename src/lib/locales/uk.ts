@@ -874,6 +874,93 @@ export const uk: Record<string, string> = {
   /* Where a call went, shown on a result */
   "mcp tool call": "виклик інструмента MCP",
 
+  /* ── chat ─────────────────────────────────────────────────────────────────
+     The models here are the CLIs on this machine, so their own names, flags and permission
+     modes stay as the CLI spells them — a translated `bypassPermissions` would not match
+     anything the operator reads in a terminal. */
+  CHAT: "ЧАТ",
+  Chat: "Чат",
+  "Local CLIs · providers · skills": "Локальні CLI · провайдери · скіли",
+  "models installed on this machine · providers on your own keys · skills":
+    "моделі, встановлені на цій машині · провайдери на ваших ключах · скіли",
+  "+ NEW CHAT": "+ НОВИЙ ЧАТ",
+  "provider · your key": "провайдер · ваш ключ",
+  "Talk to {name}": "Поговоріть із {name}",
+  "This runs over your provider key and is billed by them, not by Magnific.":
+    "Це виконується на вашому ключі провайдера, і платите ви йому, а не Magnific.",
+  "This runs the CLI already installed on this machine, with its own sign-in and its own transcript.":
+    "Це запускає CLI, уже встановлений на цій машині, з його власним входом і власною історією.",
+  "Message {name}…": "Повідомлення для {name}…",
+  "◼ STOP": "◼ СТОП",
+  "↑ SEND": "↑ НАДІСЛАТИ",
+  "Enter sends · Shift+Enter starts a new line · closing this view stops the turn":
+    "Enter надсилає · Shift+Enter — новий рядок · вихід із цього екрана зупиняє відповідь",
+  "default — the CLI decides": "типово — вирішує CLI",
+  EFFORT: "ЗУСИЛЛЯ",
+  default: "типово",
+  "These models can edit files. The permission mode decides what they may do without asking.":
+    "Ці моделі можуть редагувати файли. Режим дозволів вирішує, що вони можуть робити без запиту.",
+  "This turn": "Ця відповідь",
+  COST: "ВАРТІСТЬ",
+  "TOKENS IN": "ТОКЕНІВ УВІЙШЛО",
+  "TOKENS OUT": "ТОКЕНІВ ВИЙШЛО",
+  "Reported by the model, not by X-Forge — no Magnific credits are involved here.":
+    "Це цифри моделі, а не X-Forge — кредити Magnific тут не витрачаються.",
+  "Not installed": "Не встановлено",
+  "The {bin} command is not on this machine's PATH. Install it, or pick another model.":
+    "Команди {bin} немає в PATH цієї машини. Встановіть її або оберіть іншу модель.",
+  "not installed": "не встановлено",
+  YOU: "ВИ",
+  CONSOLE: "КОНСОЛЬ",
+  "✕ failed": "✕ помилка",
+  "✓ done": "✓ готово",
+  "tokens out": "токенів вийшло",
+
+  /* Skills */
+  SKILLS: "СКІЛИ",
+  Installed: "Встановлені",
+  "Find new": "Знайти нові",
+  "Search {n} installed skills…": "Пошук серед {n} встановлених скілів…",
+  "No skills installed for this model yet.": "Для цієї моделі ще немає встановлених скілів.",
+  "…and {n} more — narrow the search": "…і ще {n} — уточніть пошук",
+  "Search skills.sh…": "Пошук на skills.sh…",
+  "Every download is scanned before anything is written to disk.":
+    "Кожне завантаження перевіряється до того, як щось потрапить на диск.",
+  installed: "встановлено",
+  blocked: "заблоковано",
+  INSTALL: "ВСТАНОВИТИ",
+  "INSTALL ANYWAY": "ВСЕ ОДНО ВСТАНОВИТИ",
+  "◷ SCANNING…": "◷ ПЕРЕВІРЯЮ…",
+  "Nothing matched on skills.sh.": "На skills.sh нічого не знайдено.",
+  "holds:": "містить:",
+  "This skill needs review. Why install it anyway?": "Цей скіл потребує перевірки людиною. Чому все одно встановлюємо?",
+  "{name} installed": "{name} встановлено",
+  "Refused: {why}": "Відмовлено: {why}",
+  "Delete the {name} skill from disk?": "Видалити скіл {name} з диска?",
+  Delete: "Видалити",
+
+  /* Keys panel */
+  "Model & Provider Keys": "Ключі моделей і провайдерів",
+  PROVIDERS: "ПРОВАЙДЕРИ",
+  "key set": "ключ є",
+  REPLACE: "ЗАМІНИТИ",
+  ADD: "ДОДАТИ",
+  "API key for {label}": "API-ключ для {label}",
+  "+ ADD A PROVIDER": "+ ДОДАТИ ПРОВАЙДЕРА",
+  "id — e.g. together": "id — напр. together",
+  "label — e.g. Together AI": "назва — напр. Together AI",
+  "API key": "API-ключ",
+  "SAVE PROVIDER": "ЗБЕРЕГТИ ПРОВАЙДЕРА",
+  "Any endpoint that answers the OpenAI chat shape at /chat/completions works here.":
+    "Підійде будь-який ендпоінт, що відповідає у форматі OpenAI на /chat/completions.",
+  "EVERYTHING IN THE FILE": "УСЕ, ЩО В ФАЙЛІ",
+  "Nothing set yet.": "Ще нічого не задано.",
+  value: "значення",
+  "Provider added": "Провайдера додано",
+  Removed: "Видалено",
+  "Written at mode 600 and applied immediately — a CLI started after this picks it up. Secrets are shown masked; the full value never leaves the server.":
+    "Записується з правами 600 і діє одразу — CLI, запущений після цього, підхопить ключ. Секрети показані замаскованими; повне значення не залишає сервер.",
+
   /* ── worked examples ──────────────────────────────────────────────────────
      The prompt a field opens with. It is prose an operator reads and edits, so it is
      translated — except the stock search seed, which is a query against an

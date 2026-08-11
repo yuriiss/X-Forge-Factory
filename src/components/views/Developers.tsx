@@ -279,6 +279,8 @@ export default function Developers() {
             </div>
           </div>
 
+          <ModelKeys />
+
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
@@ -372,6 +374,199 @@ function NumberRow({ label, value, onSave, hint }: { label: string; value: numbe
         ) : null}
       </div>
       {hint ? <div className="hint">{hint}</div> : null}
+    </div>
+  );
+}
+
+interface EnvVariable {
+  name: string;
+  value: string;
+  secret: boolean;
+}
+
+interface ProviderRow {
+  id: string;
+  label: string;
+  base: string;
+  builtin: boolean;
+  configured: boolean;
+}
+
+/**
+ * Keys for the models in Chat.
+ *
+ * These go into `.env.local` in the clear, unlike the Magnific credential, which is
+ * envelope-encrypted in the database. The difference is deliberate and worth stating on the
+ * panel itself: the CLIs on this machine already read their own keys from the environment,
+ * an operator expects to be able to open that file and see what is set, and encrypting one
+ * of two adjacent stores would look like protection without being any.
+ *
+ * Nothing is checked against the provider before it is saved. A wrong key becomes a failed
+ * call a few seconds later carrying the provider's own words, which is a better error than
+ * anything this panel could invent, and a verification round-trip would spend a request
+ * every time somebody fixes a typo.
+ */
+function ModelKeys() {
+  const t = useT();
+  const toast = useToast();
+  const { data, reload } = useJson<{ providers: ProviderRow[]; variables: EnvVariable[]; file: string }>("/api/providers");
+
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
+  const [custom, setCustom] = useState({ id: "", label: "", base: "", key: "" });
+  const [adding, setAdding] = useState(false);
+
+  const post = async (body: Record<string, unknown>, ok: string) => {
+    try {
+      await postJson("/api/providers", body);
+      toast.push("ok", ok);
+      reload();
+      return true;
+    } catch (e) {
+      toast.push("err", (e as Error).message);
+      return false;
+    }
+  };
+
+  const providers = data?.providers ?? [];
+  const variables = data?.variables ?? [];
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="dot accent" />
+        <span className="panel-title">{t("Model & Provider Keys")}</span>
+        <span style={{ flex: 1 }} />
+        <span className="tag mono">{data?.file ?? ".env.local"}</span>
+      </div>
+
+      <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 6 }}>
+            {t("PROVIDERS")}
+          </div>
+          {providers.map((p) => (
+            <div className="kv" key={p.id}>
+              <span>
+                {p.label}
+                <span className="dim mono" style={{ marginLeft: 6, fontSize: 9 }}>
+                  {p.base.replace(/^https?:\/\//, "")}
+                </span>
+              </span>
+              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <b style={{ color: p.configured ? "var(--green-text)" : "var(--muted)" }}>{p.configured ? t("key set") : t("no key")}</b>
+                <button
+                  className="chip"
+                  style={{ fontSize: 8, minHeight: 20 }}
+                  onClick={() => {
+                    const entered = window.prompt(t("API key for {label}", { label: p.label }));
+                    if (entered?.trim()) void post({ action: "add-provider", id: p.id, base: p.base, key: entered.trim() }, t("Saved"));
+                  }}
+                >
+                  {p.configured ? t("REPLACE") : t("ADD")}
+                </button>
+                {p.configured || !p.builtin ? (
+                  <button className="chip" style={{ fontSize: 8, minHeight: 20 }} onClick={() => void post({ action: "remove-provider", id: p.id }, t("Removed"))}>
+                    ✕
+                  </button>
+                ) : null}
+              </span>
+            </div>
+          ))}
+
+          {adding ? (
+            <div className="well" style={{ padding: "10px 11px", marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="field">
+                <input placeholder={t("id — e.g. together")} value={custom.id} onChange={(e) => setCustom({ ...custom, id: e.target.value })} />
+              </div>
+              <div className="field">
+                <input placeholder={t("label — e.g. Together AI")} value={custom.label} onChange={(e) => setCustom({ ...custom, label: e.target.value })} />
+              </div>
+              <div className="field">
+                <input placeholder="https://api.together.xyz/v1" value={custom.base} onChange={(e) => setCustom({ ...custom, base: e.target.value })} />
+              </div>
+              <div className="field">
+                <input type="password" placeholder={t("API key")} value={custom.key} onChange={(e) => setCustom({ ...custom, key: e.target.value })} />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="btn primary"
+                  style={{ flex: 1 }}
+                  disabled={!custom.id.trim() || !custom.base.trim()}
+                  onClick={async () => {
+                    const ok = await post({ action: "add-provider", ...custom }, t("Provider added"));
+                    if (ok) {
+                      setCustom({ id: "", label: "", base: "", key: "" });
+                      setAdding(false);
+                    }
+                  }}
+                >
+                  {t("SAVE PROVIDER")}
+                </button>
+                <button className="btn" onClick={() => setAdding(false)}>
+                  {t("CANCEL")}
+                </button>
+              </div>
+              <div className="hint">{t("Any endpoint that answers the OpenAI chat shape at /chat/completions works here.")}</div>
+            </div>
+          ) : (
+            <button className="chip" style={{ marginTop: 8, fontSize: 8.5 }} onClick={() => setAdding(true)}>
+              {t("+ ADD A PROVIDER")}
+            </button>
+          )}
+        </div>
+
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 6 }}>
+            {t("EVERYTHING IN THE FILE")}
+          </div>
+          {variables.length === 0 ? <div className="hint">{t("Nothing set yet.")}</div> : null}
+          {variables.map((v) => (
+            <div className="kv" key={v.name}>
+              <span className="mono" style={{ fontSize: 9.5 }}>
+                {v.name}
+              </span>
+              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <b className="mono" style={{ fontSize: 9.5, color: v.secret ? "var(--text-3)" : "var(--text-2)" }}>
+                  {v.value || "—"}
+                </b>
+                <button className="chip" style={{ fontSize: 8, minHeight: 20 }} onClick={() => void post({ action: "clear", name: v.name }, t("Removed"))}>
+                  ✕
+                </button>
+              </span>
+            </div>
+          ))}
+
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <div className="field" style={{ flex: 1 }}>
+              <input
+                placeholder="ANTHROPIC_API_KEY"
+                value={name}
+                onChange={(e) => setName(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
+              />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <input type="password" placeholder={t("value")} value={value} onChange={(e) => setValue(e.target.value)} />
+            </div>
+            <button
+              className="btn primary"
+              disabled={!name.trim() || !value.trim()}
+              onClick={async () => {
+                const ok = await post({ action: "set", name, value }, t("Saved"));
+                if (ok) {
+                  setName("");
+                  setValue("");
+                }
+              }}
+            >
+              {t("SAVE")}
+            </button>
+          </div>
+          <div className="hint" style={{ marginTop: 6 }}>
+            {t("Written at mode 600 and applied immediately — a CLI started after this picks it up. Secrets are shown masked; the full value never leaves the server.")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -233,3 +233,65 @@ pre.json {
 }
 .lang-option.active .lang-code { color: var(--text-3); }
 .lang-tick { color: var(--accent); font-size: 10px; }
+
+/* ── Chat ──────────────────────────────────────────────────────────────────
+   The prototype drew a chat bubble and never used it; these are the pieces a live one
+   needs on top of that: a composer that grows with the text, a chip for a tool the model
+   reached for mid-answer, and a caret so a silent stream still looks alive. */
+textarea.composer {
+  flex: 1; resize: none; min-height: 38px; max-height: 160px;
+  padding: 10px 12px; font: inherit; font-size: 12px; line-height: 1.5;
+  color: var(--text); background: var(--well);
+  border: 1px solid var(--border-2); border-radius: 9px;
+}
+textarea.composer:focus { outline: none; border-color: var(--border-strong); }
+textarea.composer::placeholder { color: var(--muted); }
+
+.tool-chip {
+  display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap;
+  margin: 6px 0; padding: 5px 9px; font-size: 10px;
+  background: var(--well); border: 1px solid var(--border-2); border-radius: 7px;
+}
+.tool-chip-dot { color: var(--accent); }
+.tool-chip .mono { font-size: 9.5px; }
+
+.stream-caret { color: var(--accent); animation: caret 1s steps(2, start) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* ── Skill picker ─────────────────────────────────────────────────────────
+   Wider than the language menu and scrollable: a machine can carry a thousand skills, and
+   the search box is the only way through them. */
+.skill-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 70;
+  width: 520px; max-width: 82vw; padding: 9px;
+  background: var(--menu); border: 1px solid var(--border-2); border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(3, 6, 13, .6);
+}
+.skill-tabs { display: flex; gap: 6px; }
+.skill-list { max-height: 330px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+.skill-row { display: flex; align-items: center; gap: 6px; padding: 3px 2px; }
+.skill-toggle {
+  flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0;
+  padding: 4px 6px; font: inherit; font-size: 11px; text-align: left;
+  background: transparent; border: 0; border-radius: 6px; cursor: pointer;
+}
+.skill-toggle:hover { background: var(--menu-hover); }
+.skill-toggle .dim {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.skill-box {
+  flex: 0 0 auto; width: 13px; height: 13px; display: grid; place-items: center;
+  font-size: 9px; color: var(--accent);
+  border: 1px solid var(--border-3); border-radius: 3px;
+}
+
+/* Chat is two columns, not the forge's three: the model rail sits inside the left one
+   rather than beside it, so a conversation gets the width a conversation needs. */
+.chat-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
+@media (max-width: 1180px) { .chat-layout { grid-template-columns: 1fr; } }
+
+.model-rail { flex: 0 0 auto; }
+.model-rail .tool-pick { width: 62px; height: 54px; padding: 3px; }
+.model-rail .tool-pick span:nth-child(2) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-rail .tool-pick .dot { width: 5px; height: 5px; }

@@ -9,27 +9,28 @@ first, and what to do when it refuses.
 **Contents**
 
 1. [Before you start](#1-before-you-start)
-2. [The shell — sidebar, topbar, and what the numbers mean](#2-the-shell)
+2. [The shell](#2-the-shell)
 3. [How a job works](#3-how-a-job-works)
 4. [Dashboard](#4-dashboard)
-5. [Image Forge](#5-image-forge)
-6. [Video Forge](#6-video-forge)
-7. [Audio Lab](#7-audio-lab)
-8. [3D & Soul](#8-3d--soul)
-9. [Icon Foundry](#9-icon-foundry)
-10. [Upscale Studio](#10-upscale-studio)
-11. [Edit Suite](#11-edit-suite)
-12. [Flows](#12-flows)
-13. [Task Queue](#13-task-queue)
-14. [Creations](#14-creations)
-15. [Stock](#15-stock)
-16. [Utilities](#16-utilities)
-17. [MCP Console](#17-mcp-console)
-18. [Analytics](#18-analytics)
-19. [Developers](#19-developers)
-20. [The approval page](#20-the-approval-page)
-21. [Costs at a glance](#21-costs-at-a-glance)
-22. [When something goes wrong](#22-when-something-goes-wrong)
+5. [Chat](#5-chat)
+6. [Image Forge](#6-image-forge)
+7. [Video Forge](#7-video-forge)
+8. [Audio Lab](#8-audio-lab)
+9. [3D & Soul](#9-3d-soul)
+10. [Icon Foundry](#10-icon-foundry)
+11. [Upscale Studio](#11-upscale-studio)
+12. [Edit Suite](#12-edit-suite)
+13. [Flows](#13-flows)
+14. [Task Queue](#14-task-queue)
+15. [Creations](#15-creations)
+16. [Stock](#16-stock)
+17. [Utilities](#17-utilities)
+18. [MCP Console](#18-mcp-console)
+19. [Analytics](#19-analytics)
+20. [Developers](#20-developers)
+21. [The approval page](#21-the-approval-page)
+22. [Costs at a glance](#22-costs-at-a-glance)
+23. [When something goes wrong](#23-when-something-goes-wrong)
 
 ---
 
@@ -122,7 +123,7 @@ runs.
 
 **blocked_approval** — the estimate is over your threshold, or the provider refused to
 quote a price. The console gives you a one-time link; nothing runs until a human opens it.
-See [§20](#20-the-approval-page).
+See [§21](#21-the-approval-page).
 
 **budget_check** — seven checks, in this order: the tenant is active; a credential exists;
 you are under your concurrent-job limit; the balance minus the estimate stays above your
@@ -140,7 +141,7 @@ reservation.
 
 **needs_recon** — the console lost contact after submitting. The work may have happened and
 may already have cost money, so it is never re-run automatically. Resolve it in
-[Task Queue](#13-task-queue).
+[Task Queue](#14-task-queue).
 
 Two rules worth internalising:
 
@@ -186,7 +187,84 @@ provider URLs, so they do not expire.
 
 ---
 
-## 5. Image Forge
+## 5. Chat
+
+![Chat](docs/images/chat.png)
+
+The one screen here that does not talk to Magnific. It talks to the coding CLIs already
+installed on this machine — Claude Code, Grok, Kimi, Qwen Code, Codex, Antigravity — and to
+any HTTP provider you have given a key. No Magnific credits are spent in this view, no job
+is created, and nothing appears in the Task Queue: the console is not paying for these
+turns, the CLI's own account is.
+
+### The model rail
+
+Every model X-Forge knows how to drive is listed, with a light: green when the command is
+on this machine's PATH, red when it is not. Nothing is hidden — "Grok is not installed" is
+more useful than a list that quietly omits it. Hovering a model shows where its binary was
+found, which is the fastest way to notice that the console found a different Claude than
+your shell does.
+
+The detection is a lookup, not a setting. Install a CLI in another terminal and the rail
+notices within half a minute.
+
+### A turn
+
+One message spawns the CLI once, in its own non-interactive mode, and streams what it
+prints. The process is not kept alive between turns — continuity comes from the CLI's own
+transcript, resumed by the session id shown beside the model's name. That means the
+conversation survives a restart of this console, and that the CLI owns the history rather
+than X-Forge keeping a worse copy of it.
+
+Leaving the view stops the turn. A model that keeps running after nobody is reading spends
+its own account's money on output that goes nowhere.
+
+| Control | What it does |
+|---|---|
+| Model | Passed straight through as the CLI's `--model`. Empty means the CLI's own default |
+| Effort | Reasoning budget, where the CLI has the flag |
+| Permissions | What the model may do to files without asking. These are agentic CLIs — they can edit |
+| Working directory | Where the CLI runs. Defaults to your home directory |
+
+### Providers
+
+Below the CLIs are the HTTP providers: OpenRouter, TokenRouter, FreeInference, and any
+endpoint you add yourself in **Developers → Model & Provider Keys**. Anything that answers
+the OpenAI chat shape at `/chat/completions` works. A provider turn is billed by that
+provider on your key, and — unlike a CLI — it has no filesystem, no tools and no session of
+its own, so the last twenty messages are replayed with each turn.
+
+### Skills
+
+A skill is a folder of instructions a model can be told to follow, discovered by the CLI
+from its own skills directory. The picker beside the model's name lists what is installed,
+and searches [skills.sh](https://skills.sh) for what is not.
+
+Selected skills are named in the prompt, which is what makes the model reach for one rather
+than merely have it available. For a provider, which discovers nothing, the skill's text is
+read from disk and sent as a system message instead.
+
+**Everything installed here is scanned first.** A download lands in a quarantine directory,
+the scanner reads it there, and only then is it promoted — or deleted. There are three
+verdicts:
+
+| Verdict | Meaning |
+|---|---|
+| `INSTALL` | Nothing suspicious was found. It is written to the skills directory |
+| `REVIEW` | Something needs a person: a shell script the scanner cannot inspect, or a pattern that is explainable but worth reading. Installable only by overriding, with a reason |
+| `REJECT` | Hard evidence: a download piped into a shell, an instruction to send credentials somewhere, an instruction to hide what it is doing from you. Not installable at all |
+
+The scan is static — it reads files and matches patterns, it never executes anything. That
+catches the obvious attacks and does not catch a clever one, which is why the findings are
+shown to you rather than summarised into a tick. Every decision, including an override and
+its reason, is appended to `~/.x-forge/skill-audit.jsonl`.
+
+A skill is somebody else's text about to be handed to a model that can run commands on your
+machine. Read the verdict.
+
+---
+
+## 6. Image Forge
 
 ![Image Forge](docs/images/image-forge.png)
 
@@ -205,7 +283,7 @@ surfaces, and the panel header always says which one you are on.
 
 ### Using it
 
-1. **PROMPT** — plain language. If you have trained a character in [3D & Soul](#8-3d--soul),
+1. **PROMPT** — plain language. If you have trained a character in [3D & Soul](#9-3d-soul),
    reference it as `@name`, or `@name::200` to push its strength.
 2. **MODEL** — for Mystic, six looks (`realism` is the least "AI-looking"). For the
    catalogue tool, a dropdown of all 48 models with their typical generation time.
@@ -234,7 +312,7 @@ All 48 models, live from the server. **Amber dot** = also reachable on REST (mor
 
 ---
 
-## 6. Video Forge
+## 7. Video Forge
 
 ![Video Forge](docs/images/video-forge.png)
 
@@ -266,7 +344,7 @@ what was reserved. The **Request** block at the bottom of the page is the exact 
 
 ---
 
-## 7. Audio Lab
+## 8. Audio Lab
 
 ![Audio Lab](docs/images/audio-lab.png)
 
@@ -293,7 +371,7 @@ These are downloads against your plan's daily allowance, not credit purchases.
 
 ---
 
-## 8. 3D & Soul
+## 9. 3D & Soul
 
 ![3D and Soul](docs/images/soul-forge.png)
 
@@ -330,7 +408,7 @@ provider's endpoint takes about twelve seconds to answer.
 
 ---
 
-## 9. Icon Foundry
+## 10. Icon Foundry
 
 ![Icon Foundry](docs/images/icon-foundry.png)
 
@@ -348,7 +426,7 @@ costs 375 credits for no benefit.
 
 ---
 
-## 10. Upscale Studio
+## 11. Upscale Studio
 
 ![Upscale Studio](docs/images/upscale.png)
 
@@ -382,7 +460,7 @@ The workspace has three views: `BEFORE / AFTER` (side-by-side), `SIDE BY SIDE`, 
 
 ---
 
-## 11. Edit Suite
+## 12. Edit Suite
 
 ![Edit Suite](docs/images/edit-suite.png)
 
@@ -409,7 +487,7 @@ the original, whether the background may change, and separate whites/blacks leve
 
 ---
 
-## 12. Flows
+## 13. Flows
 
 ![Flows](docs/images/flows.png)
 
@@ -430,7 +508,7 @@ Flow results are valid for about twelve hours, shorter than everything else.
 
 ---
 
-## 13. Task Queue
+## 14. Task Queue
 
 ![Task Queue](docs/images/tasks.png)
 
@@ -461,7 +539,7 @@ what the console does with each provider error code.
 
 ---
 
-## 14. Creations
+## 15. Creations
 
 ![Creations](docs/images/creations.png)
 
@@ -519,7 +597,7 @@ console does.
 
 ---
 
-## 15. Stock
+## 16. Stock
 
 ![Stock](docs/images/stock.png)
 
@@ -535,7 +613,7 @@ Usage terms worth remembering: no data mining, no scraping, no resale without mo
 
 ---
 
-## 16. Utilities
+## 17. Utilities
 
 ![Utilities](docs/images/utilities.png)
 
@@ -552,12 +630,12 @@ chains it into the next tool.
 if your plan does not include it the panel reports the provider's own answer rather than
 showing an empty result.
 
-**Video Plan** lives in [Video Forge](#6-video-forge) rather than here, because that is where
+**Video Plan** lives in [Video Forge](#7-video-forge) rather than here, because that is where
 you need it.
 
 ---
 
-## 17. MCP Console
+## 18. MCP Console
 
 ![MCP Console](docs/images/mcp.png)
 
@@ -604,7 +682,7 @@ client works.
 
 ---
 
-## 18. Analytics
+## 19. Analytics
 
 ![Analytics](docs/images/analytics.png)
 
@@ -626,7 +704,7 @@ than rendering an empty chart.
 
 ---
 
-## 19. Developers
+## 20. Developers
 
 ![Developers](docs/images/developers.png)
 
@@ -673,7 +751,7 @@ things.
 
 ---
 
-## 20. The approval page
+## 21. The approval page
 
 ![Approval page](docs/images/approval.png)
 
@@ -696,7 +774,7 @@ saying yes.
 
 ---
 
-## 21. Costs at a glance
+## 22. Costs at a glance
 
 Measured on a Premium account. Treat as orders of magnitude, not a price list — the console
 always shows the provider's own estimate before you commit.
@@ -725,7 +803,7 @@ about 2 300 credits.
 
 ---
 
-## 22. When something goes wrong
+## 23. When something goes wrong
 
 ### "rejected_budget · rpm_exceeded"
 

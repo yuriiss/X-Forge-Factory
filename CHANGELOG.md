@@ -3,6 +3,40 @@
 All notable changes to X-Forge. Format follows [Keep a Changelog](https://keepachangelog.com/1.1.0/);
 versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Chat** — a seventeenth screen, second in the sidebar, that talks to the coding CLIs
+  already installed on this machine rather than to Magnific: Claude Code, Grok, Kimi, Qwen
+  Code, Codex and Antigravity, each spawned for one turn and streamed as it prints. No
+  Magnific credits are involved, no job is created, and the CLI keeps its own transcript —
+  the console resumes it by id instead of storing a worse copy.
+- Which models exist is answered by looking at the machine, not by configuration: the rail
+  lists every model X-Forge can drive and marks the ones that are not installed, because
+  "Grok is missing" is more useful than a list that quietly omits it.
+- **Providers** — OpenRouter, TokenRouter, FreeInference and any endpoint that answers the
+  OpenAI chat shape, added by hand in Developers. Provider turns are billed by the provider
+  on your own key.
+- **Model and provider keys** in Developers, written to `.env.local` at mode 600 and applied
+  to the running process immediately. Values come back masked; the file is the registry, so
+  a custom provider survives a restart without a database.
+- **Skills** — a picker beside the model that lists what is installed and searches
+  skills.sh for what is not. Selected skills are named in the prompt for a CLI, and read
+  from disk and sent as a system message for a provider, which discovers nothing.
+- **A skill scanner.** Everything installed is downloaded into quarantine and read before
+  anything reaches the skills directory: a pipe from curl into a shell, an instruction to
+  send credentials somewhere, an instruction to conceal what it is doing — each is a hard
+  block that no button can override. A shell script the scanner cannot inspect, or an
+  explainable-but-odd pattern, needs a person and a written reason. Every decision, override
+  included, is appended to `~/.x-forge/skill-audit.jsonl`.
+
+### Notes
+
+The scan is static: it reads files and matches patterns, and never executes anything. It
+catches the obvious attacks and will not catch a clever one, which is why the findings are
+shown to the operator rather than reduced to a tick.
+
 ## [0.0.2] — 2026-08-11
 
 Two languages, a viewer that actually shows what was made, and a library that lives where

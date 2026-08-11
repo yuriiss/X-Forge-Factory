@@ -21,6 +21,7 @@ const OUT = path.resolve(LANG === "en" ? "docs/images" : `docs/images/${LANG}`);
 
 const VIEWS = [
   ["Dashboard", "dashboard"],
+  ["Chat", "chat"],
   ["Image Forge", "image-forge"],
   ["Video Forge", "video-forge"],
   ["Audio Lab", "audio-lab"],
