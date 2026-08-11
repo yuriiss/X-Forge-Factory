@@ -6,7 +6,7 @@
 treats credits like money.**
 
 [![version](https://img.shields.io/badge/version-0.0.1-e8b64c?style=flat-square)](CHANGELOG.md)
-[![license](https://img.shields.io/badge/license-PolyForm%20Noncommercial-3d4757?style=flat-square)](LICENSE)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-3d4757?style=flat-square)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5-4ade80?style=flat-square)](https://nodejs.org)
 [![next](https://img.shields.io/badge/Next.js-16-0d1322?style=flat-square)](https://nextjs.org)
 [![tests](https://img.shields.io/badge/tests-62%20passing-4ade80?style=flat-square)](#tests)
@@ -226,15 +226,13 @@ ciphertext immediately and cancels everything queued.
 
 Built by **Yurii S.** — [@yuriiss](https://github.com/yuriiss).
 
-Released under the [PolyForm Noncommercial License 1.0.0](LICENSE). The source is public and
-you are free to read it, run it, modify it and share it — for personal projects, study,
-research, hobby work, and inside charities, schools, public research bodies and government
-institutions. **Commercial use is not granted by this licence**; for that, get in touch.
+Released under the [GNU Affero General Public License v3.0](LICENSE) — free software in
+the full sense: run it, read it, modify it, share it, use it commercially. The one condition
+that matters is copyleft: if you distribute a modified version, or **run one as a network
+service that other people use**, those people must be able to get your source.
 
-To be precise about a term that gets used loosely: this is *source-available*, not
-*open source* in the OSI sense, because the Open Source Definition does not allow a licence
-to exclude a field of endeavour. Everything else people usually mean by open source — read
-it, fork it, learn from it, send patches — applies.
+For the ordinary case — one operator running the console on `127.0.0.1` — the licence asks
+nothing of you at all, whatever you generate and whoever you generate it for.
 
 Issues and pull requests are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md); for anything
 touching credentials or the approval gate, read [`SECURITY.md`](SECURITY.md) first.
@@ -246,5 +244,5 @@ with, endorsed by, or supported by either.
 ---
 
 <div align="center">
-<sub>© 2026 Yurii S. · PolyForm Noncommercial 1.0.0 · built against the live Magnific API</sub>
+<sub>© 2026 Yurii S. · AGPL-3.0-or-later · built against the live Magnific API</sub>
 </div>

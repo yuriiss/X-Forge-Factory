@@ -5,6 +5,15 @@ import { useNav } from "../Console";
 import { ago, num, postJson, useJson, useToast } from "../ui";
 
 /**
+ * Where this console's source lives.
+ *
+ * The AGPL asks that anyone interacting with a modified copy over a network can get its
+ * source. A local console rarely has such users, but the offer costs one link and is the
+ * difference between complying and intending to.
+ */
+const SOURCE_URL = "https://github.com/yuriiss/X-Forge-Factory";
+
+/**
  * Developers.
  *
  * The engine's control panel: the credential (described, never revealed), the tenant's own
@@ -296,6 +305,18 @@ export default function Developers() {
                 <span>reserved</span>
                 <b>{num(status?.balance?.reserved ?? null)}</b>
               </div>
+              <div className="kv">
+                <span>licence</span>
+                <b>AGPL-3.0-or-later</b>
+              </div>
+              <div className="kv">
+                <span>source</span>
+                <b>
+                  <a className="link" href={SOURCE_URL} target="_blank" rel="noreferrer">
+                    github.com/yuriiss/X-Forge-Factory
+                  </a>
+                </b>
+              </div>
               <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                 <a className="btn" style={{ flex: 1 }} href="https://docs.magnific.com" target="_blank" rel="noreferrer">
                   ⧉ DOCS
@@ -303,9 +324,17 @@ export default function Developers() {
                 <a className="btn" style={{ flex: 1 }} href="https://magnific.com/user/api-keys" target="_blank" rel="noreferrer">
                   ⚙ KEYS
                 </a>
+                <a className="btn" style={{ flex: 1 }} href={SOURCE_URL} target="_blank" rel="noreferrer">
+                  ⌁ SOURCE
+                </a>
               </div>
               <div className="hint">
                 Server-to-server only — the key never reaches the browser. Every call on these pages is made by the X-Forge server.
+              </div>
+              <div className="hint">
+                X-Forge is free software under the GNU AGPL v3, with no warranty. If you are using a modified copy of this
+                console that someone else is running for you, that operator owes you its source — the link above is where this
+                one lives.
               </div>
             </div>
           </div>

@@ -31,7 +31,7 @@
     "typescript": "^5"
   },
   "description": "Operator console for Magnific \u2014 REST + MCP, with a job engine that reserves credits, gates spending behind human approval, and never re-runs work that may already have been paid for.",
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "AGPL-3.0-or-later",
   "author": "Yurii S. (https://github.com/yuriiss)",
   "repository": {
     "type": "git",

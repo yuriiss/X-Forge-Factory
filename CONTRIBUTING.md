@@ -1,9 +1,8 @@
 # Contributing
 
 Thanks for looking. X-Forge is maintained by **Yurii S.** ([@yuriiss](https://github.com/yuriiss))
-and released under the [PolyForm Noncommercial License 1.0.0](LICENSE) — contributions are
-accepted under the same terms. By opening a pull request you agree that your contribution is
-licensed that way too.
+and released under the [GNU AGPL v3.0](LICENSE) — contributions are accepted under the same
+terms. By opening a pull request you agree that your contribution is licensed that way too.
 
 ## Before you open a pull request
 

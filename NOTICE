@@ -1,10 +1,18 @@
 X-Forge
-Copyright (c) 2026 Yurii S. — https://github.com/yuriiss
+Copyright (C) 2026 Yurii S. — https://github.com/yuriiss
 
-Licensed under the PolyForm Noncommercial License 1.0.0. See LICENSE.
-Commercial use is not granted by that licence; contact the licensor for one.
+This program is free software: you can redistribute it and/or modify it under the terms
+of the GNU Affero General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
 
-Required Notice: Copyright (c) 2026 Yurii S. — https://github.com/yuriiss/X-Forge-Factory
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with this
+program. If not, see <https://www.gnu.org/licenses/>.
+
+Source: https://github.com/yuriiss/X-Forge-Factory
 
 This project is an independent client for the Magnific API and the Magnific MCP server.
 Magnific and Freepik are trademarks of their respective owners. This project is not

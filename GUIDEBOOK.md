@@ -1,6 +1,6 @@
 # X-FORGE · Operator Guidebook
 
-<sub>X-Forge v0.0.1 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · PolyForm Noncommercial 1.0.0</sub>
+<sub>X-Forge v0.0.1 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
 
 Everything in this console spends real credits from a real Magnific account. This guide
 covers every screen and every control: what it does, what it costs, what it needs from you
