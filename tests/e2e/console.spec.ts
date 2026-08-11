@@ -114,6 +114,34 @@ test("the task queue shows the state machine for a finished job", async ({ page 
   await expect(page.locator(".activity-row").first()).toBeVisible();
 });
 
+test("the language picker switches the console to Ukrainian and remembers it", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".nav-item:has-text('Dashboard')")).toBeVisible({ timeout: 20_000 });
+
+  await page.locator(".lang-picker .chip").click();
+  await page.locator(".lang-option:has-text('Українська')").click();
+
+  // Navigation, headings and the document language all follow, not just the chip.
+  await expect(page.locator(".lang-picker .chip")).toContainText("UA");
+  await expect(page.locator(".nav-item:has-text('Панель')")).toBeVisible();
+  await expect(page.locator(".intro h1")).toHaveText("ПАНЕЛЬ");
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+
+  // A view rendered after the switch is translated too — the choice is not a one-off repaint.
+  await page.evaluate(() => {
+    window.location.hash = "creations";
+  });
+  await expect(page.locator(".intro h1")).toHaveText("СТВОРЕНЕ");
+
+  // And it survives a reload, which is the whole point of storing it.
+  await page.reload();
+  await expect(page.locator(".nav-item:has-text('Створене')")).toBeVisible({ timeout: 20_000 });
+
+  await page.locator(".lang-picker .chip").click();
+  await page.locator(".lang-option:has-text('English')").click();
+  await expect(page.locator(".nav-item:has-text('Creations')")).toBeVisible();
+});
+
 function labelFor(id: string): string {
   const map: Record<string, string> = {
     dashboard: "Dashboard",

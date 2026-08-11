@@ -1,6 +1,6 @@
 # X-FORGE · Operator Guidebook
 
-<sub>X-Forge v0.0.1 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
+<sub>X-Forge v0.0.2 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
 
 Everything in this console spends real credits from a real Magnific account. This guide
 covers every screen and every control: what it does, what it costs, what it needs from you
@@ -69,10 +69,23 @@ and **Dashboard → Services**.
 | `◆ N CREDITS` | **Spendable** credits: the account balance minus what open jobs have reserved |
 | `KEY · …9f79` | Last four characters of the stored key. Click to open Developers |
 | `x-magnific-api-key` | A reminder of the auth header. Click to open Developers |
+| `EN ⌄` | Language — English or Ukrainian |
 | Clock | Local time, for correlating with job ages |
 
 The credit chip is the number that matters. If the balance says 40 000 and two video jobs
 are in flight, the chip shows what is actually left to spend.
+
+### Language
+
+The picker beside the clock switches the console between English and Ukrainian. The choice
+is stored in the browser, so it survives a reload and applies to the approval page as well —
+that page opens from a link in a chat client, with none of this shell around it.
+
+The translation is by string rather than by identifier: anything not yet translated appears
+in English instead of as a placeholder. Model names, endpoint paths and provider states
+(`needs_recon`, `widescreen_16_9`) stay as the provider spells them in both languages —
+translating them would make them harder to match against the API's own answers. This
+guidebook exists in both languages too: [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md).
 
 ### Sidebar
 

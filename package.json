@@ -1,6 +1,6 @@
 {
   "name": "x-forge",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -12,8 +12,9 @@
     "test:unit": "npm --prefix tests run test:unit",
     "test:api": "npm --prefix tests run test:api",
     "test:e2e": "npm --prefix tests run test:e2e",
-    "docs": "node scripts/capture-screens.mjs && node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf",
-    "docs:pdf": "node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf"
+    "docs": "node scripts/capture-screens.mjs && npm run docs:pdf",
+    "i18n:audit": "node scripts/i18n-audit.mjs",
+    "docs:pdf": "node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf && node scripts/make-pdf.mjs GUIDEBOOK.uk.md docs/X-Forge-Guidebook-UK.pdf"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",

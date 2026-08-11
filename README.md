@@ -5,12 +5,13 @@
 **An operator console for Magnific — every capability on one surface, with an engine that
 treats credits like money.**
 
-[![version](https://img.shields.io/badge/version-0.0.1-e8b64c?style=flat-square)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.0.2-e8b64c?style=flat-square)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-AGPL--3.0-3d4757?style=flat-square)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5-4ade80?style=flat-square)](https://nodejs.org)
 [![next](https://img.shields.io/badge/Next.js-16-0d1322?style=flat-square)](https://nextjs.org)
-[![tests](https://img.shields.io/badge/tests-62%20passing-4ade80?style=flat-square)](#tests)
-[![guidebook](https://img.shields.io/badge/guidebook-27%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
+[![tests](https://img.shields.io/badge/tests-68%20passing-4ade80?style=flat-square)](#tests)
+[![guidebook](https://img.shields.io/badge/guidebook-28%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
+[![languages](https://img.shields.io/badge/languages-EN%20%C2%B7%20UA-7fd4cb?style=flat-square)](GUIDEBOOK.uk.md)
 
 <img src="docs/images/dashboard.png" alt="X-Forge dashboard" width="100%">
 
@@ -43,6 +44,9 @@ catalogue, text-to-speech, 3D and most of Edit Suite.
 > **New here?** [`GUIDEBOOK.md`](GUIDEBOOK.md) walks through every screen and every control,
 > with screenshots — also built as a printable PDF at
 > [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf).
+>
+> **Українською:** [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) · [PDF](docs/X-Forge-Guidebook-UK.pdf).
+> The console itself speaks both languages — the picker sits in the topbar.
 
 ---
 
@@ -203,7 +207,9 @@ tests/            unit · api · e2e
 | | |
 |---|---|
 | [`GUIDEBOOK.md`](GUIDEBOOK.md) | Every screen and control, with screenshots — 22 sections |
-| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 27 pages |
+| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 28 pages |
+| [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) | Те саме українською — 22 розділи |
+| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 29 сторінок |
 | [`CHANGELOG.md`](CHANGELOG.md) | What shipped, and when |
 | [`.env.example`](.env.example) | Every setting, explained |
 

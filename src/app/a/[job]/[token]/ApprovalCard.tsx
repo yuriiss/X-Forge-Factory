@@ -1,5 +1,6 @@
 "use client";
 
+import { LangProvider, useT } from "@/lib/i18n";
 import { useState } from "react";
 import type { ApprovalView } from "@/lib/server/engine";
 
@@ -9,7 +10,16 @@ const REASONS: Record<string, string> = {
   unknown_price: "The provider could not price this call",
 };
 
-export default function ApprovalCard({ approval, jobId, token }: { approval: ApprovalView; jobId: string; token: string }) {
+export default function ApprovalCard(props: { approval: ApprovalView; jobId: string; token: string }) {
+  return (
+    <LangProvider>
+      <Card {...props} />
+    </LangProvider>
+  );
+}
+
+function Card({ approval, jobId, token }: { approval: ApprovalView; jobId: string; token: string }) {
+  const t = useT();
   const [state, setState] = useState(approval.state);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,7 +33,7 @@ export default function ApprovalCard({ approval, jobId, token }: { approval: App
         body: JSON.stringify({ decision }),
       });
       const json = (await res.json()) as { message?: string };
-      setMessage(json.message ?? (res.ok ? "Done." : "That did not work."));
+      setMessage(json.message ?? (res.ok ? t("Done.") : t("That did not work.")));
       setState("used");
     } catch (e) {
       setMessage((e as Error).message);
@@ -38,7 +48,7 @@ export default function ApprovalCard({ approval, jobId, token }: { approval: App
     <div className="panel" style={{ maxWidth: 620, width: "100%" }}>
       <div className="panel-head">
         <span className="dot accent" />
-        <span className="panel-title">Approval required</span>
+        <span className="panel-title">{t("Approval required")}</span>
         <span style={{ flex: 1 }} />
         <span className="badge amber">{approval.kind}</span>
       </div>
@@ -47,7 +57,7 @@ export default function ApprovalCard({ approval, jobId, token }: { approval: App
         <div>
           <h1 style={{ fontSize: 18 }}>{approval.label || approval.modelId}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            {REASONS[approval.reason] ?? approval.reason}
+            {t(REASONS[approval.reason] ?? approval.reason)}
           </div>
         </div>
 
@@ -56,21 +66,21 @@ export default function ApprovalCard({ approval, jobId, token }: { approval: App
             <div className="stat-value" style={{ color: "var(--accent)" }}>
               {approval.estimatedCredits ?? "?"}
             </div>
-            <div className="stat-label">Estimate</div>
+            <div className="stat-label">{t("Estimate")}</div>
           </div>
           <div className="stat">
             <div className="stat-value">{approval.balance ?? "—"}</div>
-            <div className="stat-label">Spendable</div>
+            <div className="stat-label">{t("Spendable")}</div>
           </div>
           <div className="stat">
             <div className="stat-value">{minutesLeft}m</div>
-            <div className="stat-label">Link expires</div>
+            <div className="stat-label">{t("Link expires")}</div>
           </div>
         </div>
 
         <div className="well" style={{ padding: "10px 12px" }}>
           <div className="eyebrow" style={{ marginBottom: 6 }}>
-            Parameters
+            {t("Parameters")}
           </div>
           {Object.entries(approval.params)
             .filter(([k]) => !k.startsWith("__"))
@@ -85,15 +95,15 @@ export default function ApprovalCard({ approval, jobId, token }: { approval: App
         {state === "pending" ? (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn primary" style={{ flex: 1 }} disabled={busy} onClick={() => decide("approved")}>
-              {busy ? "…" : "✓ APPROVE & RUN"}
+              {busy ? "…" : t("✓ APPROVE & RUN")}
             </button>
             <button className="btn" style={{ flex: 1 }} disabled={busy} onClick={() => decide("rejected")}>
-              ✕ CANCEL JOB
+              {t("✕ CANCEL JOB")}
             </button>
           </div>
         ) : (
           <div className={state === "expired" ? "error-box" : "ok-box"}>
-            {message || (state === "expired" ? "This link expired." : "This link has already been used.")}
+            {message || (state === "expired" ? t("This link expired.") : t("This link has already been used."))}
           </div>
         )}
 

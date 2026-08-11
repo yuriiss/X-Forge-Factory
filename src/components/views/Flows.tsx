@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { getJson, postJson, useJson, useToast } from "../ui";
 
@@ -40,6 +41,7 @@ interface RunRecord {
 }
 
 export default function Flows() {
+  const t = useT();
   const toast = useToast();
   const [scope, setScope] = useState<"published" | "mine">("published");
   const [selected, setSelected] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function Flows() {
         webhook: webhook || undefined,
       });
       setRuns((prev) => [{ runId: r.runId, status: String(r.run?.status ?? "pending"), at: new Date().toISOString(), raw: r.run }, ...prev]);
-      toast.push("ok", `Run started — ${r.runId || "no id returned"}`);
+      toast.push("ok", `${t("Run started —")} ${r.runId || t("no id returned")}`);
     } catch (e) {
       toast.push("err", (e as Error).message);
     } finally {
@@ -98,26 +100,26 @@ export default function Flows() {
           ⌘
         </span>
         <div style={{ marginRight: 10 }}>
-          <h3 style={{ letterSpacing: 2 }}>FLOWS</h3>
-          <div className="nav-sub">visual pipelines built in Magnific Spaces · run over the API</div>
+          <h3 style={{ letterSpacing: 2 }}>{t("FLOWS")}</h3>
+          <div className="nav-sub">{t("visual pipelines built in Magnific Spaces · run over the API")}</div>
         </div>
         <div className="stat">
           <div className="stat-value">{list.data?.flows.length ?? 0}</div>
-          <div className="stat-label">{scope === "mine" ? "MINE" : "PUBLISHED"}</div>
+          <div className="stat-label">{scope === "mine" ? t("MINE") : t("PUBLISHED")}</div>
         </div>
         <div className="stat">
           <div className="stat-value">{runs.length}</div>
-          <div className="stat-label">RUNS</div>
+          <div className="stat-label">{t("RUNS")}</div>
         </div>
         <span style={{ flex: 1 }} />
         <button className={`chip ${scope === "published" ? "active" : ""}`} onClick={() => setScope("published")}>
-          PUBLISHED
+          {t("PUBLISHED")}
         </button>
         <button className={`chip ${scope === "mine" ? "active" : ""}`} onClick={() => setScope("mine")}>
-          MINE
+          {t("MINE")}
         </button>
         <button className="btn primary" disabled={!selected || busy} onClick={run}>
-          {busy ? "◷ …" : "▷ RUN SELECTED"}
+          {busy ? "◷ …" : t("▷ RUN SELECTED")}
         </button>
       </div>
 
@@ -125,8 +127,8 @@ export default function Flows() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">{detail ? String(detail.flow.name ?? selected) : "Flow"}</span>
-            <span className="meta">{selected ? `SQID ${selected}` : "pick one on the right"}</span>
+            <span className="panel-title">{detail ? String(detail.flow.name ?? selected) : t("Flow")}</span>
+            <span className="meta">{selected ? `SQID ${selected}` : t("pick one on the right")}</span>
             <span style={{ flex: 1 }} />
             {detail?.cost ? <span className="badge amber">≈ {detail.cost} CREDITS / RUN</span> : null}
           </div>
@@ -137,15 +139,15 @@ export default function Flows() {
                 <div className="node primary" style={{ left: 40, top: 40 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span style={{ color: "var(--accent)" }}>⊕</span>
-                    <h3>Inputs · {detail?.inputs.length ?? 0}</h3>
+                    <h3>{t("Inputs · {n}", { n: detail?.inputs.length ?? 0 })}</h3>
                     <span style={{ flex: 1 }} />
                     <span className="dot green" />
                   </div>
-                  <div className="nav-sub">keyed by api_key</div>
+                  <div className="nav-sub">{t("keyed by api_key")}</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                     {detail?.inputs.slice(0, 2).map((i) => (
                       <span className="tag" key={String(i.api_key ?? i.id)}>
-                        {String(i.api_key ?? i.name ?? "input")}
+                        {String(i.api_key ?? i.name ?? t("input"))}
                       </span>
                     ))}
                   </div>
@@ -155,18 +157,18 @@ export default function Flows() {
                   <div className="node-badge">flow</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span className="muted">⌘</span>
-                    <h3 className="truncate">{String(detail?.flow.name ?? "pipeline")}</h3>
+                    <h3 className="truncate">{String(detail?.flow.name ?? t("pipeline"))}</h3>
                   </div>
-                  <div className="nav-sub">{nodes.length ? `${nodes.length} nodes` : "server-side pipeline"}</div>
+                  <div className="nav-sub">{nodes.length ? `${nodes.length} ${t("nodes")}` : t("server-side pipeline")}</div>
                 </div>
                 <div className="connector h" style={{ left: 232, top: 196, height: 1, width: 70 }} />
                 <div className="node" style={{ left: 302, top: 170 }}>
                   <div className="node-badge">output</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span className="muted">▤</span>
-                    <h3>Result</h3>
+                    <h3>{t("Result")}</h3>
                   </div>
-                  <div className="nav-sub">URL valid ~12 h</div>
+                  <div className="nav-sub">{t("URL valid ~12 h")}</div>
                 </div>
               </>
             ) : (
@@ -176,8 +178,8 @@ export default function Flows() {
                   <span>◇</span>
                   <span>▷</span>
                 </div>
-                <div className="empty-title">No flow selected</div>
-                <div className="nav-sub">pick one from the list to see its inputs</div>
+                <div className="empty-title">{t("No flow selected")}</div>
+                <div className="nav-sub">{t("pick one from the list to see its inputs")}</div>
               </div>
             )}
           </div>
@@ -190,14 +192,14 @@ export default function Flows() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Available Flows</span>
+              <span className="panel-title">{t("Available Flows")}</span>
               <span style={{ flex: 1 }} />
               <span className="chip" style={{ minHeight: 22, fontSize: 8.5 }}>
                 {list.data?.flows.length ?? 0}
               </span>
             </div>
             <div className="panel-body scroll-y" style={{ display: "flex", flexDirection: "column", gap: 9, maxHeight: 320 }}>
-              {list.loading ? <div className="hint">loading…</div> : null}
+              {list.loading ? <div className="hint">{t("loading…")}</div> : null}
               {list.error ? <div className="error-box">{list.error}</div> : null}
               {list.data?.flows.map((f) => (
                 <div key={f.sqid} className={`flow-item ${selected === f.sqid ? "active" : ""}`} onClick={() => setSelected(f.sqid)}>
@@ -214,7 +216,7 @@ export default function Flows() {
               ))}
               {list.data && !list.data.flows.length ? (
                 <div className="hint">
-                  {scope === "mine" ? "nothing published from this account yet" : "no published flows returned"}
+                  {scope === "mine" ? t("nothing published from this account yet") : t("no published flows returned")}
                 </div>
               ) : null}
             </div>
@@ -223,25 +225,25 @@ export default function Flows() {
           <div className="panel">
             <div className="panel-head">
               <span style={{ color: "var(--accent)" }}>▷</span>
-              <span className="panel-title">Run Flow</span>
+              <span className="panel-title">{t("Run Flow")}</span>
               <span className="meta">POST …/run</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {!selected ? (
-                <div className="hint">Select a flow first.</div>
+                <div className="hint">{t("Select a flow first.")}</div>
               ) : !detail ? (
-                <div className="hint">reading inputs…</div>
+                <div className="hint">{t("reading inputs…")}</div>
               ) : detail.inputs.length ? (
                 detail.inputs.map((i) => {
                   const key = String(i.api_key ?? i.id ?? i.name ?? "input");
                   return (
                     <div key={key}>
                       <div className="label">
-                        {String(i.name ?? key)} · {String(i.type ?? "text")}
+                        {String(i.name ?? key)} · {String(i.type ?? t("text"))}
                       </div>
                       <div className="field">
                         <input
-                          placeholder={String(i.type ?? "value")}
+                          placeholder={String(i.type ?? t("value"))}
                           value={values[key] ?? ""}
                           onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
                         />
@@ -250,16 +252,16 @@ export default function Flows() {
                   );
                 })
               ) : (
-                <div className="hint">This flow declares no dynamic inputs — it runs as published.</div>
+                <div className="hint">{t("This flow declares no dynamic inputs — it runs as published.")}</div>
               )}
               <div>
-                <div className="label">WEBHOOK · OPTIONAL</div>
+                <div className="label">{t("WEBHOOK · OPTIONAL")}</div>
                 <div className="field">
                   <input placeholder="https://your-server.com/webhook" value={webhook} onChange={(e) => setWebhook(e.target.value)} />
                 </div>
               </div>
               <button className="btn primary" style={{ width: "100%" }} disabled={!selected || busy} onClick={run}>
-                {busy ? "◷ STARTING…" : `▷ RUN${detail?.cost ? ` · ≈ ${detail.cost} CREDITS` : ""}`}
+                {busy ? t("◷ STARTING…") : `${t("▷ RUN")}${detail?.cost ? ` · ≈ ${detail.cost} ${t("CREDITS")}` : ""}`}
               </button>
               <div className="hint">Inputs are keyed by api_key; the UUID is accepted for backward compatibility.</div>
             </div>
@@ -268,7 +270,7 @@ export default function Flows() {
           <div className="panel">
             <div className="panel-head">
               <span style={{ color: "var(--accent)" }}>〜</span>
-              <span className="panel-title">Runs</span>
+              <span className="panel-title">{t("Runs")}</span>
               <span style={{ flex: 1 }} />
               <span className="chip" style={{ minHeight: 22, fontSize: 8.5 }}>
                 GET runs/&#123;id&#125;
@@ -284,15 +286,15 @@ export default function Flows() {
                     <span className="truncate muted">{r.runId}</span>
                     <span style={{ flex: 1 }} />
                     <button className="chip" style={{ minHeight: 22, fontSize: 8.5 }} onClick={() => poll(r.runId)}>
-                      POLL
+                      {t("POLL")}
                     </button>
                   </div>
                 ))
               ) : (
-                <div className="hint">no runs started from this console yet</div>
+                <div className="hint">{t("no runs started from this console yet")}</div>
               )}
             </div>
-            <div className="panel-foot">pending · running · completed · completed_with_errors · failed · cancelled</div>
+            <div className="panel-foot">{t("pending · running · completed · completed_with_errors · failed · cancelled")}</div>
           </div>
         </div>
       </div>

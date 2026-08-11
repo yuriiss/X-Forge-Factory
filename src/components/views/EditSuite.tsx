@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, Slider, Toggle, useEstimate, useJobRunner, useToast, type Upload } from "../ui";
 
@@ -124,6 +125,7 @@ const ASPECTS = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"] as c
 const LIGHT_STYLES = ["smooth", "hard", "cinematic"] as const;
 
 export default function EditSuite() {
+  const t = useT();
   const toast = useToast();
   const runner = useJobRunner();
   const [toolId, setToolId] = useState("relight");
@@ -138,7 +140,7 @@ export default function EditSuite() {
   const [whites, setWhites] = useState(60);
   const [blacks, setBlacks] = useState(60);
 
-  const tool = TOOLS.find((t) => t.id === toolId)!;
+  const tool = TOOLS.find((x) => x.id === toolId)!;
 
   const params = useMemo(() => {
     const p: Record<string, unknown> = {};
@@ -166,25 +168,25 @@ export default function EditSuite() {
   const est = useEstimate(tool.kind, params, !!image);
 
   const run = async () => {
-    if (!image) return toast.push("err", "Drop an image first");
+    if (!image) return toast.push("err", t("Drop an image first"));
     if (tool.needs === "creation" && !image.creationIdentifier)
-      return toast.push("err", "This tool needs an MCP creation — reconnect the MCP session and re-drop the file");
+      return toast.push("err", t("This tool needs an MCP creation — reconnect the MCP session and re-drop the file"));
     if (tool.needs === "publicUrl" && !image.assetUrl)
-      return toast.push("err", "This endpoint refuses base64 — the staged URL was not created, try re-dropping the file");
-    return runner.run(tool.kind, params, { label: `${tool.title} · ${image.name}`, via: tool.path });
+      return toast.push("err", t("This endpoint refuses base64 — the staged URL was not created, try re-dropping the file"));
+    return runner.run(tool.kind, params, { label: `${t(tool.title)} · ${image.name}`, via: tool.path });
   };
 
   return (
     <>
       <div className="intro">
         <div>
-          <h1>EDIT SUITE</h1>
+          <h1>{t("EDIT SUITE")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            Relight · expand · cutout · reimagine · camera · retouch · vectorise · crop
+            {t("Relight · expand · cutout · reimagine · camera · retouch · vectorise · crop")}
           </div>
         </div>
         <div className="topbar-spacer" />
-        <span className="chip active">{tool.title.toUpperCase()}</span>
+        <span className="chip active">{t(tool.title).toUpperCase()}</span>
         <span className="chip">{tool.path.toUpperCase()}</span>
       </div>
 
@@ -193,23 +195,23 @@ export default function EditSuite() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">{tool.title}</span>
+            <span className="panel-title">{t(tool.title)}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">{tool.endpoint}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="hint" style={{ margin: 0 }}>
-              {tool.blurb}
+              {t(tool.blurb)}
             </div>
 
             <Dropzone
-              label="⊕ image"
+              label={t("⊕ image")}
               hint={
                 tool.needs === "creation"
-                  ? "imported as a creation for the MCP tool"
+                  ? t("imported as a creation for the MCP tool")
                   : tool.needs === "publicUrl"
-                    ? "staged to a public URL — this endpoint refuses base64"
-                    : "sent inline as base64"
+                    ? t("staged to a public URL — this endpoint refuses base64")
+                    : t("sent inline as base64")
               }
               accept="image/*"
               value={image}
@@ -219,11 +221,11 @@ export default function EditSuite() {
               minHeight={100}
             />
 
-            {tool.fields.includes("prompt") ? <Field label="PROMPT" rows={2} value={prompt} onChange={setPrompt} /> : null}
+            {tool.fields.includes("prompt") ? <Field label={t("PROMPT")} rows={2} value={prompt} onChange={setPrompt} /> : null}
 
             {tool.fields.includes("aspect") ? (
               <div>
-                <div className="label">ASPECT RATIO</div>
+                <div className="label">{t("ASPECT RATIO")}</div>
                 <Seg options={ASPECTS} value={aspect} onChange={setAspect} wrap />
               </div>
             ) : null}
@@ -231,29 +233,29 @@ export default function EditSuite() {
             {tool.fields.includes("light") ? (
               <>
                 <Dropzone
-                  label="⊕ transfer_light_from_reference_image"
-                  hint="optional reference lighting"
+                  label={t("⊕ transfer_light_from_reference_image")}
+                  hint={t("optional reference lighting")}
                   accept="image/*"
                   value={lightRef}
                   onChange={setLightRef}
                   minHeight={56}
                 />
-                <Slider label="LIGHT TRANSFER STRENGTH" value={lightStrength} min={0} max={100} onChange={setLightStrength} />
-                <Toggle on={interpolate} onChange={setInterpolate} label="INTERPOLATE FROM ORIGINAL" />
-                <Toggle on={changeBg} onChange={setChangeBg} label="CHANGE BACKGROUND" />
+                <Slider label={t("LIGHT TRANSFER STRENGTH")} value={lightStrength} min={0} max={100} onChange={setLightStrength} />
+                <Toggle on={interpolate} onChange={setInterpolate} label={t("INTERPOLATE FROM ORIGINAL")} />
+                <Toggle on={changeBg} onChange={setChangeBg} label={t("CHANGE BACKGROUND")} />
                 <div style={{ display: "flex", gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <div className="label">STYLE</div>
+                    <div className="label">{t("STYLE")}</div>
                     <Seg options={LIGHT_STYLES} value={lightStyle} onChange={setLightStyle} />
                   </div>
                 </div>
-                <Slider label="WHITES" value={whites} min={0} max={100} onChange={setWhites} />
-                <Slider label="BLACKS" value={blacks} min={0} max={100} onChange={setBlacks} />
+                <Slider label={t("WHITES")} value={whites} min={0} max={100} onChange={setWhites} />
+                <Slider label={t("BLACKS")} value={blacks} min={0} max={100} onChange={setBlacks} />
               </>
             ) : null}
 
             <button className="btn primary" style={{ width: "100%" }} disabled={runner.busy} onClick={run}>
-              {runner.busy ? "◷ WORKING…" : `${tool.glyph} ${tool.title.toUpperCase()} · ≈ ${est?.credits ?? "?"} CR`}
+              {runner.busy ? t("◷ WORKING…") : `${tool.glyph} ${t(tool.title).toUpperCase()} · ≈ ${est?.credits ?? "?"} CR`}
             </button>
           </div>
         </div>
@@ -263,27 +265,27 @@ export default function EditSuite() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Editing Tools</span>
+              <span className="panel-title">{t("Editing Tools")}</span>
               <span style={{ flex: 1 }} />
-              <span className="badge blue">REST + MCP</span>
+              <span className="badge blue">{t("REST + MCP")}</span>
             </div>
             <div className="panel-body grid cols-2" style={{ gap: 10 }}>
-              {TOOLS.map((t) => (
+              {TOOLS.map((tool) => (
                 <div
-                  key={t.id}
+                  key={tool.id}
                   className="surface clickable"
-                  style={{ padding: 12, borderColor: t.id === toolId ? "var(--accent)" : undefined }}
-                  onClick={() => setToolId(t.id)}
+                  style={{ padding: 12, borderColor: tool.id === toolId ? "var(--accent)" : undefined }}
+                  onClick={() => setToolId(tool.id)}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <span className="icon-tile" style={{ width: 28, height: 28, fontSize: 12 }}>
-                      {t.glyph}
+                      {tool.glyph}
                     </span>
-                    <b style={{ fontSize: 11.5 }}>{t.title}</b>
+                    <b style={{ fontSize: 11.5 }}>{t(tool.title)}</b>
                     <span style={{ flex: 1 }} />
-                    <span className="tag">{t.path}</span>
+                    <span className="tag">{tool.path}</span>
                   </div>
-                  <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: 1.6 }}>{t.blurb}</div>
+                  <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: 1.6 }}>{t(tool.blurb)}</div>
                 </div>
               ))}
             </div>
@@ -292,7 +294,7 @@ export default function EditSuite() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Workspace</span>
+              <span className="panel-title">{t("Workspace")}</span>
               <span style={{ flex: 1 }} />
               {runner.job ? <span className="badge amber">{runner.job.status}</span> : null}
             </div>
@@ -305,10 +307,10 @@ export default function EditSuite() {
                   href={runner.job?.assets[0]?.url}
                   download
                 >
-                  ⇩ DOWNLOAD
+                  {t("⇩ DOWNLOAD")}
                 </a>
                 <button className="btn" style={{ flex: 1 }} disabled={runner.busy || !image} onClick={run}>
-                  ⟳ NEW TAKE
+                  {t("⟳ NEW TAKE")}
                 </button>
               </div>
             </div>

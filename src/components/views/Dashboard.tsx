@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useNav } from "../Console";
 import { ago, num, useJson, type JobView } from "../ui";
 
@@ -12,6 +13,7 @@ import { ago, num, useJson, type JobView } from "../ui";
  * no MCP session means no balance — it says so instead of showing a plausible one.
  */
 export default function Dashboard() {
+  const t = useT();
   const { status, go } = useNav();
   const jobs = useJson<{ jobs: JobView[] }>("/api/jobs?limit=8", { intervalMs: 4000 });
   const creations = useJson<{ items: { id: string; label: string; kind: string; url?: string; preview?: string | null; model?: string }[] }>(
@@ -32,17 +34,17 @@ export default function Dashboard() {
     <>
       <div className="intro">
         <div>
-          <h1>DASHBOARD</h1>
+          <h1>{t("DASHBOARD")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            Magnific fleet overview · credit balance · task health
+            {t("Magnific fleet overview · credit balance · task health")}
           </div>
         </div>
         <div className="topbar-spacer" />
         <span className={`chip ${status?.rest.connected ? "active" : ""}`}>
           <span className={`dot ${status?.rest.connected ? "green" : "red"}`} /> api.magnific.com
         </span>
-        <span className="chip">PLAN · {(status?.balance?.tier ?? "unknown").toUpperCase()}</span>
-        <span className="chip">{status?.mcp.connected ? "MCP · CONNECTED" : "MCP · OFFLINE"}</span>
+        <span className="chip">PLAN · {(status?.balance?.tier ?? t("unknown")).toUpperCase()}</span>
+        <span className="chip">{status?.mcp.connected ? t("MCP · CONNECTED") : t("MCP · OFFLINE")}</span>
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: "1.15fr 1fr 1fr .95fr" }}>
@@ -50,7 +52,7 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Credits</span>
+            <span className="panel-title">{t("Credits")}</span>
             <span style={{ flex: 1 }} />
             <span className="badge amber">{(b?.tier ?? "—").toUpperCase()}</span>
           </div>
@@ -68,7 +70,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-                <div className="eyebrow">PLAN CONSUMED</div>
+                <div className="eyebrow">{t("PLAN CONSUMED")}</div>
               </div>
             </div>
             <div className="metric-row" style={{ marginTop: 16, gridTemplateColumns: "repeat(2,1fr)" }}>
@@ -76,28 +78,28 @@ export default function Dashboard() {
                 <div className="stat-value" style={{ color: "var(--accent)" }}>
                   {num(b?.available)}
                 </div>
-                <div className="stat-label">BALANCE</div>
+                <div className="stat-label">{t("BALANCE")}</div>
               </div>
               <div className="stat">
                 <div className="stat-value">{num(b?.totalPlan)}</div>
-                <div className="stat-label">PLAN</div>
+                <div className="stat-label">{t("PLAN")}</div>
               </div>
               <div className="stat">
                 <div className="stat-value" style={{ color: "var(--green)" }}>
                   {num(status?.today.credits)}
                 </div>
-                <div className="stat-label">SPENT TODAY</div>
+                <div className="stat-label">{t("SPENT TODAY")}</div>
               </div>
               <div className="stat">
                 <div className="stat-value" style={{ color: "var(--blue)" }}>
                   {num(status?.today.jobs)}
                 </div>
-                <div className="stat-label">JOBS TODAY</div>
+                <div className="stat-label">{t("JOBS TODAY")}</div>
               </div>
             </div>
             <div className="hint" style={{ marginTop: 12 }}>
-              {b?.reserved ? `${num(b.reserved)} credits reserved by open jobs — spendable ${num(b.spendable)}.` : null}
-              {!b ? "Balance comes from the MCP session — connect it to see credits." : " API calls always consume credits."}
+              {b?.reserved ? `${num(b.reserved)} ${t("credits reserved by open jobs — spendable")} ${num(b.spendable)}.` : null}
+              {!b ? t("Balance comes from the MCP session — connect it to see credits.") : t(" API calls always consume credits.")}
             </div>
           </div>
         </div>
@@ -106,25 +108,25 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Rate Limits</span>
+            <span className="panel-title">{t("Rate Limits")}</span>
             <span style={{ flex: 1 }} />
             <span className={`badge ${(shaper?.tenantRpm ?? 0) < (shaper?.tenantLimit ?? 1) ? "green" : "red"}`}>
-              {(shaper?.tenantRpm ?? 0) < (shaper?.tenantLimit ?? 1) ? "OK" : "THROTTLING"}
+              {(shaper?.tenantRpm ?? 0) < (shaper?.tenantLimit ?? 1) ? t("OK") : t("THROTTLING")}
             </span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-            <Meter label={`THIS TENANT · ${shaper?.tenantLimit ?? 0} RPM`} value={shaper?.tenantRpm ?? 0} max={shaper?.tenantLimit ?? 1} />
-            <Meter label={`OUTBOUND SHAPER · ${shaper?.globalLimit ?? 0} RPM`} value={shaper?.globalRpm ?? 0} max={shaper?.globalLimit ?? 1} green />
-            <Meter label="BURST · 5s WINDOW" value={shaper?.burst ?? 0} max={50} green />
+            <Meter label={`${t("THIS TENANT ·")} ${shaper?.tenantLimit ?? 0} ${t("RPM")}`} value={shaper?.tenantRpm ?? 0} max={shaper?.tenantLimit ?? 1} />
+            <Meter label={`${t("OUTBOUND SHAPER ·")} ${shaper?.globalLimit ?? 0} ${t("RPM")}`} value={shaper?.globalRpm ?? 0} max={shaper?.globalLimit ?? 1} green />
+            <Meter label={t("BURST · 5s WINDOW")} value={shaper?.burst ?? 0} max={50} green />
             <div className="kv">
-              <span>provider key limit</span>
-              <b>50 req / min</b>
+              <span>{t("provider key limit")}</span>
+              <b>{t("50 req / min")}</b>
             </div>
             <div className="kv">
-              <span>provider IP burst</span>
-              <b>50 hits/s over 5s</b>
+              <span>{t("provider IP burst")}</span>
+              <b>{t("50 hits/s over 5s")}</b>
             </div>
-            <div className="hint">429 = back off · 401 = check header · 503 = retry with jitter</div>
+            <div className="hint">{t("429 = back off · 401 = check header · 503 = retry with jitter")}</div>
           </div>
         </div>
 
@@ -132,17 +134,17 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Task Queue</span>
+            <span className="panel-title">{t("Task Queue")}</span>
             <span style={{ flex: 1 }} />
             <button className="chip" style={{ minHeight: 24, fontSize: 8.5 }} onClick={() => go("tasks")}>
-              OPEN ›
+              {t("OPEN ›")}
             </button>
           </div>
           <div className="panel-body" style={{ paddingTop: 6, paddingBottom: 6 }}>
             {jobs.data?.jobs.length ? (
               jobs.data.jobs.slice(0, 6).map((j) => (
                 <div className="task-row" key={j.id}>
-                  <span className={`badge ${badgeFor(j.status)}`}>{shortStatus(j.status)}</span>
+                  <span className={`badge ${badgeFor(j.status)}`}>{t(shortStatus(j.status))}</span>
                   <span style={{ flex: 1 }} className="truncate">
                     {j.label || j.modelId}
                   </span>
@@ -156,26 +158,26 @@ export default function Dashboard() {
                   <span>◇</span>
                   <span>◆</span>
                 </div>
-                <div className="nav-sub">nothing has run yet</div>
+                <div className="nav-sub">{t("nothing has run yet")}</div>
               </div>
             )}
           </div>
-          <div className="panel-foot">poll every 3s · or register webhook_url per task</div>
+          <div className="panel-foot">{t("poll every 3s · or register webhook_url per task")}</div>
         </div>
 
         {/* Services */}
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Services</span>
+            <span className="panel-title">{t("Services")}</span>
           </div>
           <div className="panel-body" style={{ paddingTop: 6, paddingBottom: 6 }}>
-            <Service ok={!!status?.rest.connected} name="REST API v1" note={status?.rest.connected ? "200" : "no key"} />
-            <Service ok={!!status?.mcp.connected} name="MCP server" note={status?.mcp.connected ? "OAuth" : "offline"} />
-            <Service ok={!!status?.rest.credential.present} name="Credential" note={status?.rest.credential.present ? `…${status.rest.credential.last4}` : "none"} />
-            <Service ok={status?.tenant.status === "active"} name="Engine" note={status?.tenant.status ?? "—"} />
-            <Service ok={!!status?.tenant.videoEnabled} name="Video" note={status?.tenant.videoEnabled ? "enabled" : "disabled"} />
-            <Service ok={true} name="Vault" note={`${status?.tenant.retentionDays ?? 30}d retention`} />
+            <Service ok={!!status?.rest.connected} name="REST API v1" note={status?.rest.connected ? "200" : t("no key")} />
+            <Service ok={!!status?.mcp.connected} name="MCP server" note={status?.mcp.connected ? "OAuth" : t("offline")} />
+            <Service ok={!!status?.rest.credential.present} name={t("Credential")} note={status?.rest.credential.present ? `…${status.rest.credential.last4}` : t("none")} />
+            <Service ok={status?.tenant.status === "active"} name={t("Engine")} note={t(status?.tenant.status ?? "—")} />
+            <Service ok={!!status?.tenant.videoEnabled} name={t("Video")} note={status?.tenant.videoEnabled ? t("enabled") : t("disabled")} />
+            <Service ok={true} name={t("Vault")} note={`${status?.tenant.retentionDays ?? 30} ${t("d retention")}`} />
           </div>
         </div>
       </div>
@@ -184,11 +186,11 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Recent Creations</span>
-            <span className="meta">local vault</span>
+            <span className="panel-title">{t("Recent Creations")}</span>
+            <span className="meta">{t("local vault")}</span>
             <span style={{ flex: 1 }} />
             <button className="chip" style={{ minHeight: 24, fontSize: 8.5 }} onClick={() => go("creations")}>
-              ALL ›
+              {t("ALL ›")}
             </button>
           </div>
           <div className="panel-body">
@@ -217,8 +219,8 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="empty-state">
-                <div className="empty-title">Nothing forged yet</div>
-                <div className="nav-sub">generated assets are downloaded here and kept</div>
+                <div className="empty-title">{t("Nothing forged yet")}</div>
+                <div className="nav-sub">{t("generated assets are downloaded here and kept")}</div>
               </div>
             )}
           </div>
@@ -227,10 +229,10 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Activity</span>
+            <span className="panel-title">{t("Activity")}</span>
             <span style={{ flex: 1 }} />
             <span className="chip" style={{ minHeight: 24, fontSize: 8.5 }}>
-              job events
+              {t("job events")}
             </span>
           </div>
           <div className="panel-body" style={{ paddingTop: 6, paddingBottom: 6 }}>
@@ -238,7 +240,7 @@ export default function Dashboard() {
               logs.data.events.map((e) => (
                 <div className="activity-row" key={e.id}>
                   <span className="dim mono">{new Date(e.at).toISOString().slice(11, 19)}</span>
-                  <span className={`badge ${badgeFor(e.to_state)}`}>{shortStatus(e.to_state)}</span>
+                  <span className={`badge ${badgeFor(e.to_state)}`}>{t(shortStatus(e.to_state))}</span>
                   <span className="truncate muted">
                     {e.kind} · {e.detail ?? e.model_id}
                   </span>
@@ -248,7 +250,7 @@ export default function Dashboard() {
               ))
             ) : (
               <div className="empty-state">
-                <div className="nav-sub">no events yet</div>
+                <div className="nav-sub">{t("no events yet")}</div>
               </div>
             )}
           </div>
@@ -257,14 +259,14 @@ export default function Dashboard() {
 
       <div className="block-section">
         <div className="block-head">
-          <h2>Quick Launch</h2>
-          <span className="meta">every Magnific capability, one hop away</span>
+          <h2>{t("Quick Launch")}</h2>
+          <span className="meta">{t("every Magnific capability, one hop away")}</span>
         </div>
         <div className="grid cols-4">
-          <Quick go={go} to="upscale" glyph="⇱" title="Upscale" text="Creative · Precision V2 · Skin Enhancer — 2× to 16×." />
-          <Quick go={go} to="image-forge" glyph="✦" title="Generate Image" text="Mystic, FLUX, Seedream, Imagen, Nano Banana." />
-          <Quick go={go} to="video-forge" glyph="▶" title="Generate Video" text="Kling · Veo · Hailuo · WAN · PixVerse · Seedance." />
-          <Quick go={go} to="flows" glyph="⌘" title="Run a Flow" text="Published Spaces pipelines · one-call execution." />
+          <Quick go={go} to="upscale" glyph="⇱" title={t("Upscale")} text="Creative · Precision V2 · Skin Enhancer — 2× to 16×." />
+          <Quick go={go} to="image-forge" glyph="✦" title={t("Generate Image")} text="Mystic, FLUX, Seedream, Imagen, Nano Banana." />
+          <Quick go={go} to="video-forge" glyph="▶" title={t("Generate Video")} text="Kling · Veo · Hailuo · WAN · PixVerse · Seedance." />
+          <Quick go={go} to="flows" glyph="⌘" title={t("Run a Flow")} text="Published Spaces pipelines · one-call execution." />
         </div>
       </div>
     </>

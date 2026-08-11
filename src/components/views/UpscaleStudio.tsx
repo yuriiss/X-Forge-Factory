@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, Slider, Toggle, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
@@ -38,6 +39,7 @@ const ENGINES = ["automatic", "magnific_illusio", "magnific_sharpy", "magnific_s
 const FLAVORS = ["photo", "sublime", "photo_denoiser"] as const;
 
 export default function UpscaleStudio() {
+  const t = useT();
   const toast = useToast();
   const runner = useJobRunner();
   const [mode, setMode] = useState<(typeof MODES)[number]["id"]>("creative");
@@ -89,7 +91,7 @@ export default function UpscaleStudio() {
 
   const submit = async () => {
     if (!image) {
-      toast.push("err", "Drop an image to upscale");
+      toast.push("err", t("Drop an image to upscale"));
       return;
     }
     await runner.run(active.kind, params, { label: `${active.label} ${scale}`, via: "rest" });
@@ -99,9 +101,9 @@ export default function UpscaleStudio() {
     <>
       <div className="intro">
         <div>
-          <h1>UPSCALE STUDIO</h1>
+          <h1>{t("UPSCALE STUDIO")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            The Magnific flagship — Creative · Precision · Precision V2 · Skin Enhancer
+            {t("The Magnific flagship — Creative · Precision · Precision V2 · Skin Enhancer")}
           </div>
         </div>
         <div className="topbar-spacer" />
@@ -138,8 +140,8 @@ export default function UpscaleStudio() {
               </div>
 
               <Dropzone
-                label="⇪ Drop image · or pick one from the vault below"
-                hint="output cap 25.3 Mpx · send the original, no canvas re-encode"
+                label={t("⇪ Drop image · or pick one from the vault below")}
+                hint={t("output cap 25.3 Mpx · send the original, no canvas re-encode")}
                 accept="image/*"
                 value={image}
                 onChange={setImage}
@@ -150,7 +152,7 @@ export default function UpscaleStudio() {
 
               {vault.data?.items.length ? (
                 <div>
-                  <div className="label">FROM THE VAULT</div>
+                  <div className="label">{t("FROM THE VAULT")}</div>
                   <div className="gallery" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(56px,1fr))", gap: 6 }}>
                     {vault.data.items.map((v) => (
                       <div
@@ -186,7 +188,7 @@ export default function UpscaleStudio() {
                             assetUrl: json.assetUrl,
                             name: v.label || "vault asset",
                           });
-                          toast.push("ok", "Loaded from the vault");
+                          toast.push("ok", t("Loaded from the vault"));
                         }}
                       >
                         <div className="thumb-img" style={{ height: 44 }}>
@@ -201,7 +203,7 @@ export default function UpscaleStudio() {
 
               {mode !== "skin" ? (
                 <div>
-                  <div className="label">SCALE FACTOR</div>
+                  <div className="label">{t("SCALE FACTOR")}</div>
                   <Seg options={SCALES} value={scale} onChange={setScale} />
                 </div>
               ) : null}
@@ -209,7 +211,7 @@ export default function UpscaleStudio() {
               {mode === "creative" || mode === "precision" ? (
                 <>
                   <div>
-                    <div className="label">OPTIMIZED FOR</div>
+                    <div className="label">{t("OPTIMIZED FOR")}</div>
                     <select className="select" value={optimised} onChange={(e) => setOptimised(e.target.value as (typeof OPTIMISED)[number])}>
                       {OPTIMISED.map((o) => (
                         <option key={o} value={o}>
@@ -219,43 +221,43 @@ export default function UpscaleStudio() {
                     </select>
                   </div>
                   <div>
-                    <div className="label">ENGINE</div>
+                    <div className="label">{t("ENGINE")}</div>
                     <Seg options={ENGINES} value={engine} onChange={setEngine} wrap />
                   </div>
                   <Field
-                    label="PROMPT · GUIDES THE UPSCALE"
+                    label={t("PROMPT · GUIDES THE UPSCALE")}
                     rows={2}
                     value={prompt}
                     onChange={setPrompt}
-                    placeholder="reuse the original generation prompt for the best result"
+                    placeholder={t("reuse the original generation prompt for the best result")}
                   />
-                  <Slider label="CREATIVITY · -10 — 10" value={creativity} min={-10} max={10} onChange={setCreativity} />
-                  <Slider label="HDR · DEFINITION & DETAIL" value={hdr} min={-10} max={10} onChange={setHdr} />
-                  <Slider label="RESEMBLANCE · FIDELITY" value={resemblance} min={-10} max={10} onChange={setResemblance} />
-                  <Slider label="FRACTALITY · PROMPT INTRICACY" value={fractality} min={-10} max={10} onChange={setFractality} />
-                  <Toggle on={nsfw} onChange={setNsfw} label="FILTER NSFW · scan output" />
+                  <Slider label={t("CREATIVITY · -10 — 10")} value={creativity} min={-10} max={10} onChange={setCreativity} />
+                  <Slider label={t("HDR · DEFINITION & DETAIL")} value={hdr} min={-10} max={10} onChange={setHdr} />
+                  <Slider label={t("RESEMBLANCE · FIDELITY")} value={resemblance} min={-10} max={10} onChange={setResemblance} />
+                  <Slider label={t("FRACTALITY · PROMPT INTRICACY")} value={fractality} min={-10} max={10} onChange={setFractality} />
+                  <Toggle on={nsfw} onChange={setNsfw} label={t("FILTER NSFW · scan output")} />
                 </>
               ) : null}
 
               {mode === "precision-v2" ? (
                 <>
-                  <Slider label="SHARPEN · def 7" value={sharpen} min={0} max={100} onChange={setSharpen} />
-                  <Slider label="SMART GRAIN · def 7" value={grain} min={0} max={100} onChange={setGrain} />
-                  <Slider label="ULTRA DETAIL · def 30" value={ultraDetail} min={0} max={100} onChange={setUltraDetail} />
+                  <Slider label={t("SHARPEN · def 7")} value={sharpen} min={0} max={100} onChange={setSharpen} />
+                  <Slider label={t("SMART GRAIN · def 7")} value={grain} min={0} max={100} onChange={setGrain} />
+                  <Slider label={t("ULTRA DETAIL · def 30")} value={ultraDetail} min={0} max={100} onChange={setUltraDetail} />
                   <div>
-                    <div className="label">FLAVOR</div>
+                    <div className="label">{t("FLAVOR")}</div>
                     <Seg options={FLAVORS} value={flavor} onChange={setFlavor} />
                   </div>
-                  <div className="hint">Faithful super-resolution — no hallucinated detail, unlike Creative.</div>
+                  <div className="hint">{t("Faithful super-resolution — no hallucinated detail, unlike Creative.")}</div>
                 </>
               ) : null}
 
-              {mode === "skin" ? <div className="hint">Portrait retouch — creative, faithful and flexible variants live on the same path.</div> : null}
+              {mode === "skin" ? <div className="hint">{t("Portrait retouch — creative, faithful and flexible variants live on the same path.")}</div> : null}
 
-              <Field label="WEBHOOK_URL · OPTIONAL" value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
+              <Field label={t("WEBHOOK_URL · OPTIONAL")} value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
 
               <button className="btn primary" style={{ width: "100%", marginTop: "auto" }} disabled={runner.busy} onClick={submit}>
-                {runner.busy ? "◷ UPSCALING…" : `⇱ UPSCALE ${mode === "skin" ? "" : scale} · ≈ ${est?.credits ?? "?"} CR`}
+                {runner.busy ? t("◷ UPSCALING…") : `${t("⇱ UPSCALE")} ${mode === "skin" ? "" : scale} · ≈ ${est?.credits ?? "?"} ${t("CR")}`}
               </button>
               {est?.reason ? <div className="hint">{est.reason}</div> : null}
             </div>
@@ -266,13 +268,13 @@ export default function UpscaleStudio() {
         <div className="workspace" style={{ minHeight: 640, alignItems: "stretch", justifyContent: "flex-start", padding: 14 }}>
           <div className="tabs">
             <button className={`chip ${view === "before-after" ? "active" : ""}`} onClick={() => setView("before-after")}>
-              BEFORE / AFTER
+              {t("BEFORE / AFTER")}
             </button>
             <button className={`chip ${view === "side" ? "active" : ""}`} onClick={() => setView("side")}>
-              SIDE BY SIDE
+              {t("SIDE BY SIDE")}
             </button>
             <button className={`chip ${view === "output" ? "active" : ""}`} onClick={() => setView("output")}>
-              OUTPUT ONLY
+              {t("OUTPUT ONLY")}
             </button>
             <span style={{ flex: 1 }} />
             {runner.job ? <span className="badge amber">{runner.job.status}</span> : null}
@@ -286,7 +288,7 @@ export default function UpscaleStudio() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img className="result-media" src={image.url} alt="input" />
                 <span className="badge" style={{ position: "absolute", left: 8, top: 8 }}>
-                  INPUT
+                  {t("INPUT")}
                 </span>
               </div>
               <div className="result-frame g1" style={{ position: "relative" }}>
@@ -299,7 +301,7 @@ export default function UpscaleStudio() {
                   <span style={{ color: "rgba(232,237,245,0.3)", fontSize: 34 }}>✦</span>
                 )}
                 <span className="badge green" style={{ position: "absolute", left: 8, top: 8 }}>
-                  OUTPUT
+                  {t("OUTPUT")}
                 </span>
               </div>
             </div>
@@ -310,7 +312,7 @@ export default function UpscaleStudio() {
             <div className="notice-box">
               Approval required —{" "}
               <a className="link" href={runner.blocked.approveUrl} target="_blank" rel="noreferrer">
-                open the link
+                {t("open the link")}
               </a>
             </div>
           ) : null}
@@ -322,10 +324,10 @@ export default function UpscaleStudio() {
               href={runner.job?.assets[0]?.url}
               download
             >
-              ⇩ DOWNLOAD
+              {t("⇩ DOWNLOAD")}
             </a>
             <button className="btn" style={{ flex: 1 }} disabled={runner.busy || !image} onClick={submit}>
-              ⟳ RUN AGAIN
+              {t("⟳ RUN AGAIN")}
             </button>
           </div>
         </div>
@@ -335,28 +337,28 @@ export default function UpscaleStudio() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Estimated Cost</span>
+              <span className="panel-title">{t("Estimated Cost")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div className="stat">
                 <div className="stat-value" style={{ color: "var(--accent)", fontSize: 22 }}>
                   {est?.credits ?? "—"}
                 </div>
-                <div className="stat-label">CREDITS · {est?.certainty ?? "unknown"}</div>
+                <div className="stat-label">{t("CREDITS · {certainty}", { certainty: t(est?.certainty ?? "unknown") })}</div>
               </div>
               <div className="hint" style={{ margin: 0 }}>
                 {est?.reason ?? "Cost scales with output area — the same factor costs far more on a large source."}
               </div>
               <div className="kv">
-                <span>source</span>
+                <span>{t("source")}</span>
                 <b>{image ? `${(image.bytes / 1024).toFixed(0)} KB` : "—"}</b>
               </div>
               <div className="kv">
-                <span>factor</span>
+                <span>{t("factor")}</span>
                 <b>{mode === "skin" ? "n/a" : scale}</b>
               </div>
               <div className="kv">
-                <span>priced by</span>
+                <span>{t("priced by")}</span>
                 <b>{est?.source ?? "—"}</b>
               </div>
             </div>
@@ -365,26 +367,26 @@ export default function UpscaleStudio() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Mode Notes</span>
+              <span className="panel-title">{t("Mode Notes")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               <div className="kv">
-                <span>Creative</span>
-                <b>invents detail · prompt-guided</b>
+                <span>{t("Creative")}</span>
+                <b>{t("invents detail · prompt-guided")}</b>
               </div>
               <div className="kv">
-                <span>Precision</span>
-                <b>faithful · engine-driven</b>
+                <span>{t("Precision")}</span>
+                <b>{t("faithful · engine-driven")}</b>
               </div>
               <div className="kv">
-                <span>Precision V2</span>
-                <b>sharpen · grain · ultra detail</b>
+                <span>{t("Precision V2")}</span>
+                <b>{t("sharpen · grain · ultra detail")}</b>
               </div>
               <div className="kv">
-                <span>Skin Enhancer</span>
-                <b>portrait retouch</b>
+                <span>{t("Skin Enhancer")}</span>
+                <b>{t("portrait retouch")}</b>
               </div>
-              <div className="hint">Reusing the original generation prompt improves a creative upscale noticeably.</div>
+              <div className="hint">{t("Reusing the original generation prompt improves a creative upscale noticeably.")}</div>
             </div>
           </div>
         </div>

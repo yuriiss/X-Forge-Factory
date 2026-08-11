@@ -201,3 +201,35 @@ pre.json {
   width: 100%; height: 100%;
   background: radial-gradient(ellipse at 50% 40%, #16233d 0%, #0a101d 70%);
 }
+
+/* ── Language picker ───────────────────────────────────────────────────────
+   A menu rather than a toggle, so the chip states which language is active and the list
+   states which ones exist. Anchored to the chip, not the viewport: the topbar scrolls
+   with nothing, so a fixed-position menu would only be another thing to keep in sync. */
+.lang-picker { position: relative; }
+.lang-caret { display: inline-block; font-size: 9px; opacity: .7; transition: transform .12s ease; }
+.lang-caret.up { transform: rotate(180deg); }
+
+.lang-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 70;
+  min-width: 168px; padding: 5px;
+  background: var(--menu); border: 1px solid var(--border-2); border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(3, 6, 13, .55);
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.lang-option {
+  display: grid; grid-template-columns: 22px 1fr 12px; align-items: center; gap: 9px;
+  width: 100%; padding: 7px 8px;
+  font: inherit; font-size: 11px; text-align: left;
+  background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+  color: var(--text-2);
+}
+.lang-option:hover { background: var(--menu-hover); }
+.lang-option.active { color: var(--text); }
+.lang-code {
+  font-size: 8.5px; letter-spacing: .1em; color: var(--muted);
+  text-transform: uppercase;
+}
+.lang-option.active .lang-code { color: var(--text-3); }
+.lang-tick { color: var(--accent); font-size: 10px; }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 function bytes(n: number): string {
@@ -42,6 +43,7 @@ export default function Lightbox({
   onPrev?: () => void;
   onNext?: () => void;
 }) {
+  const t = useT();
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
@@ -104,7 +106,7 @@ export default function Lightbox({
   })();
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={asset.label ?? "asset"}>
+    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={asset.label ?? t("asset")}>
       <div className="lightbox" onClick={(e) => e.stopPropagation()}>
         <div className="lightbox-head">
           <span className="badge amber">{asset.kind.toUpperCase()}</span>
@@ -122,18 +124,18 @@ export default function Lightbox({
 
           {isPicture ? (
             <>
-              <button className="icon-btn" title="Zoom out  −" onClick={() => setScale((s) => clamp(s / 1.25))}>
+              <button className="icon-btn" title={t("Zoom out  −")} onClick={() => setScale((s) => clamp(s / 1.25))}>
                 −
               </button>
-              <button className="chip" style={{ minWidth: 62 }} title="Fit  0" onClick={reset}>
-                {percent !== null ? `${percent}%` : "FIT"}
+              <button className="chip" style={{ minWidth: 62 }} title={t("Fit  0")} onClick={reset}>
+                {percent !== null ? `${percent}%` : t("FIT")}
               </button>
-              <button className="icon-btn" title="Zoom in  +" onClick={() => setScale((s) => clamp(s * 1.25))}>
+              <button className="icon-btn" title={t("Zoom in  +")} onClick={() => setScale((s) => clamp(s * 1.25))}>
                 +
               </button>
               <button
                 className="chip"
-                title="Actual pixels"
+                title={t("Actual pixels")}
                 onClick={() => {
                   const el = imgRef.current;
                   if (el && natural) {
@@ -147,10 +149,10 @@ export default function Lightbox({
             </>
           ) : null}
 
-          <a className="icon-btn" href={asset.url} download title="Download">
+          <a className="icon-btn" href={asset.url} download title={t("Download")}>
             ⇩
           </a>
-          <button className="icon-btn" onClick={onClose} title="Close  Esc">
+          <button className="icon-btn" onClick={onClose} title={t("Close  Esc")}>
             ✕
           </button>
         </div>
@@ -201,24 +203,24 @@ export default function Lightbox({
             </div>
           ) : (
             <a className="btn" href={asset.url} download>
-              ⇩ {asset.mime ?? "file"}
+              ⇩ {asset.mime ?? t("file")}
             </a>
           )}
         </div>
 
         <div className="lightbox-foot">
           <span className="dim">
-            {isPicture ? "scroll to zoom · drag to pan · double-click to toggle · 0 fits" : is3d ? "drag to orbit · scroll to zoom" : ""}
+            {isPicture ? t("scroll to zoom · drag to pan · double-click to toggle · 0 fits") : is3d ? t("drag to orbit · scroll to zoom") : ""}
           </span>
           <span style={{ flex: 1 }} />
           {onPrev ? (
             <button className="chip" onClick={onPrev}>
-              ‹ prev
+              {t("‹ prev")}
             </button>
           ) : null}
           {onNext ? (
             <button className="chip" onClick={onNext}>
-              next ›
+              {t("next ›")}
             </button>
           ) : null}
         </div>
@@ -239,6 +241,7 @@ function clamp(s: number): number {
  * dashboard should pay for a viewer they never open.
  */
 function ModelStage({ url }: { url: string }) {
+  const t = useT();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -258,7 +261,7 @@ function ModelStage({ url }: { url: string }) {
       <div style={{ display: "grid", placeItems: "center", gap: 10 }}>
         <span className="spinner" style={{ width: 22, height: 22 }} />
         <span className="dim" style={{ fontSize: 10, letterSpacing: 1.5 }}>
-          LOADING VIEWER
+          {t("LOADING VIEWER")}
         </span>
       </div>
     );

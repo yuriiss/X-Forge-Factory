@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { Dropzone, Field, postJson, useToast, type Upload } from "../ui";
 
@@ -11,6 +12,7 @@ import { Dropzone, Field, postJson, useToast, type Upload } from "../ui";
  * going through the job engine, and a ledger entry per prompt rewrite would be noise.
  */
 export default function Utilities() {
+  const t = useT();
   const toast = useToast();
 
   const [i2pImage, setI2pImage] = useState<Upload | null>(null);
@@ -43,9 +45,9 @@ export default function Utilities() {
     <>
       <div className="intro">
         <div>
-          <h1>UTILITIES</h1>
+          <h1>{t("UTILITIES")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            image → prompt · prompt improver · AI classifier — 1 000 requests per day, no credits
+            {t("image → prompt · prompt improver · AI classifier — 1 000 requests per day, no credits")}
           </div>
         </div>
       </div>
@@ -55,14 +57,14 @@ export default function Utilities() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Image → Prompt</span>
+            <span className="panel-title">{t("Image → Prompt")}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">POST /v1/ai/image-to-prompt</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Dropzone
-              label="⊕ image"
-              hint="reverse-engineer any picture into a reusable prompt"
+              label={t("⊕ image")}
+              hint={t("reverse-engineer any picture into a reusable prompt")}
               accept="image/*"
               value={i2pImage}
               onChange={setI2pImage}
@@ -81,12 +83,12 @@ export default function Utilities() {
                 )
               }
             >
-              {i2pBusy ? "◷ READING…" : "⚗ DESCRIBE"}
+              {i2pBusy ? t("◷ READING…") : t("⚗ DESCRIBE")}
             </button>
             {i2pResult ? (
               <div className="well" style={{ padding: "11px 12px" }}>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>
-                  RESULT
+                  {t("RESULT")}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text-2)", lineHeight: 1.7 }}>{i2pResult}</div>
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
@@ -95,13 +97,13 @@ export default function Utilities() {
                     style={{ fontSize: 8.5 }}
                     onClick={() => {
                       void navigator.clipboard.writeText(i2pResult);
-                      toast.push("ok", "Copied");
+                      toast.push("ok", t("Copied"));
                     }}
                   >
-                    ⧉ COPY
+                    {t("⧉ COPY")}
                   </button>
                   <button className="chip" style={{ fontSize: 8.5 }} onClick={() => setPrompt(i2pResult)}>
-                    → SEND TO IMPROVER
+                    {t("→ SEND TO IMPROVER")}
                   </button>
                 </div>
               </div>
@@ -113,12 +115,12 @@ export default function Utilities() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Improve Prompt</span>
+            <span className="panel-title">{t("Improve Prompt")}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">POST /v1/ai/improve-prompt</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Field label="INPUT PROMPT" rows={3} value={prompt} onChange={setPrompt} />
+            <Field label={t("INPUT PROMPT")} rows={3} value={prompt} onChange={setPrompt} />
             <button
               className="btn primary"
               style={{ width: "100%" }}
@@ -131,12 +133,12 @@ export default function Utilities() {
                 )
               }
             >
-              {improveBusy ? "◷ IMPROVING…" : "✦ IMPROVE"}
+              {improveBusy ? t("◷ IMPROVING…") : t("✦ IMPROVE")}
             </button>
             {improved ? (
               <div className="well" style={{ padding: "11px 12px" }}>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>
-                  ENHANCED
+                  {t("ENHANCED")}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text-2)", lineHeight: 1.7 }}>{improved}</div>
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
@@ -145,13 +147,13 @@ export default function Utilities() {
                     style={{ fontSize: 8.5 }}
                     onClick={() => {
                       void navigator.clipboard.writeText(improved);
-                      toast.push("ok", "Copied");
+                      toast.push("ok", t("Copied"));
                     }}
                   >
-                    ⧉ COPY
+                    {t("⧉ COPY")}
                   </button>
                   <button className="chip" style={{ fontSize: 8.5 }} onClick={() => setPrompt(improved)}>
-                    ⟳ IMPROVE AGAIN
+                    {t("⟳ IMPROVE AGAIN")}
                   </button>
                 </div>
               </div>
@@ -163,14 +165,14 @@ export default function Utilities() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">AI Classifier</span>
+            <span className="panel-title">{t("AI Classifier")}</span>
             <span style={{ flex: 1 }} />
-            <span className="tag">detect AI-generated images</span>
+            <span className="tag">{t("detect AI-generated images")}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Dropzone
-              label="⊕ image to verify"
-              hint="moderation & compliance — class_name ∈ { ai, not_ai }"
+              label={t("⊕ image to verify")}
+              hint={t("moderation & compliance — class_name ∈ { ai, not_ai }")}
               accept="image/*"
               value={classifyImage}
               onChange={setClassifyImage}
@@ -192,7 +194,7 @@ export default function Utilities() {
                 );
               }}
             >
-              {classifyBusy ? "◷ CLASSIFYING…" : "⚖ CLASSIFY"}
+              {classifyBusy ? t("◷ CLASSIFYING…") : t("⚖ CLASSIFY")}
             </button>
             {classifyError ? (
               <div className="notice-box">
@@ -215,24 +217,23 @@ export default function Utilities() {
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="kv">
-              <span>image-to-prompt</span>
-              <b>1 000 requests / day</b>
+              <span>{t("image-to-prompt")}</span>
+              <b>{t("1 000 requests / day")}</b>
             </div>
             <div className="kv">
-              <span>improve-prompt</span>
-              <b>1 000 requests / day</b>
+              <span>{t("improve-prompt")}</span>
+              <b>{t("1 000 requests / day")}</b>
             </div>
             <div className="kv">
-              <span>credits</span>
-              <b>none — request-limited</b>
+              <span>{t("credits")}</span>
+              <b>{t("none — request-limited")}</b>
             </div>
             <div className="kv">
-              <span>runs through</span>
-              <b>the same outbound shaper</b>
+              <span>{t("runs through")}</span>
+              <b>{t("the same outbound shaper")}</b>
             </div>
             <div className="hint">
-              These bypass the job engine on purpose: they finish in seconds, produce no asset, and cost nothing — a reservation and a ledger row
-              per call would be bookkeeping about nothing.
+              {t("These bypass the job engine on purpose: they finish in seconds, produce no asset, and cost nothing — a reservation and a ledger row per call would be bookkeeping about nothing.")}
             </div>
           </div>
         </div>

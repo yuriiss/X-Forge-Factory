@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { useJson } from "../ui";
 
@@ -24,6 +25,7 @@ interface Item {
 }
 
 export default function Stock() {
+  const t = useT();
   const [tab, setTab] = useState<(typeof TABS)[number]>("images");
   const [query, setQuery] = useState("neon harbour at night");
   const [term, setTerm] = useState("neon harbour at night");
@@ -37,15 +39,15 @@ export default function Stock() {
     <>
       <div className="intro">
         <div>
-          <h1>STOCK</h1>
+          <h1>{t("STOCK")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            Curated libraries — photos &amp; templates · icons · video · music · sound effects
+            {t("Curated libraries — photos & templates · icons · video · music · sound effects")}
           </div>
         </div>
         <div className="topbar-spacer" />
-        {TABS.map((t) => (
-          <button key={t} className={`chip ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
-            {t.toUpperCase()}
+        {TABS.map((tb) => (
+          <button key={tb} className={`chip ${tab === tb ? "active" : ""}`} onClick={() => setTab(tb)}>
+            {t(tb).toUpperCase()}
           </button>
         ))}
       </div>
@@ -53,12 +55,12 @@ export default function Stock() {
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-head">
           <span className="dot accent" />
-          <span className="panel-title">Search</span>
+          <span className="panel-title">{t("Search")}</span>
           <span className="meta">GET /v1/{tab === "images" ? "resources" : tab === "sfx" ? "sound-effects" : tab}</span>
           <span style={{ flex: 1 }} />
           <div className="field" style={{ minHeight: 32, width: 300 }}>
             <input
-              placeholder="⌕ query — e.g. “neon harbour at night”"
+              placeholder={t("⌕ query — e.g. “neon harbour at night”")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -67,11 +69,11 @@ export default function Stock() {
             />
           </div>
           <button className="btn primary" onClick={() => setTerm(query)}>
-            ⌕ SEARCH
+            {t("⌕ SEARCH")}
           </button>
         </div>
         <div className="panel-body">
-          {res.loading ? <div className="hint">searching…</div> : null}
+          {res.loading ? <div className="hint">{t("searching…")}</div> : null}
           {res.error ? <div className="error-box">{res.error}</div> : null}
 
           {tab === "music" || tab === "sfx" ? (
@@ -84,9 +86,9 @@ export default function Stock() {
                   <span style={{ flex: 1 }} className="truncate">
                     {i.title}
                   </span>
-                  {i.tags?.slice(0, 2).map((t) => (
-                    <span className="tag" key={t}>
-                      {t}
+                  {i.tags?.slice(0, 2).map((tag) => (
+                    <span className="tag" key={tag}>
+                      {tag}
                     </span>
                   ))}
                   <span className="dim mono">{i.meta}</span>
@@ -109,17 +111,17 @@ export default function Stock() {
                     <span style={{ fontSize: 9, color: "var(--dim)" }} className="truncate">
                       {i.meta}
                     </span>
-                    <span className="badge amber">DL</span>
+                    <span className="badge amber">{t("DL")}</span>
                   </div>
                 </a>
               ))}
             </div>
           )}
 
-          {res.data && !res.data.items.length && !res.loading ? <div className="hint">nothing matched that search</div> : null}
+          {res.data && !res.data.items.length && !res.loading ? <div className="hint">{t("nothing matched that search")}</div> : null}
         </div>
         <div className="panel-foot">
-          {res.data?.total ? `${res.data.total.toLocaleString()} results · ` : ""}
+          {res.data?.total ? `${res.data.total.toLocaleString()} ${t("results")} · ` : ""}
           Every unique download must be reported; caching is allowed while the plan is active.
         </div>
       </div>
@@ -128,20 +130,19 @@ export default function Stock() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Download Rules</span>
+            <span className="panel-title">{t("Download Rules")}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div className="kv">
-              <span>Premium / Pro</span>
-              <b>100 downloads / day</b>
+              <span>{t("Premium / Pro")}</span>
+              <b>{t("100 downloads / day")}</b>
             </div>
             <div className="kv">
-              <span>Business / Enterprise</span>
-              <b>unlimited · credit-based</b>
+              <span>{t("Business / Enterprise")}</span>
+              <b>{t("unlimited · credit-based")}</b>
             </div>
             <div className="hint">
-              Stock downloads do not consume generation credits below Business — the daily cap applies instead. No data mining, no scraping, no
-              resale without modification.
+              {t("Stock downloads do not consume generation credits below Business — the daily cap applies instead. No data mining, no scraping, no resale without modification.")}
             </div>
           </div>
         </div>
@@ -149,14 +150,14 @@ export default function Stock() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">What each tab reads</span>
+            <span className="panel-title">{t("What each tab reads")}</span>
           </div>
           <div className="panel-body" style={{ paddingTop: 4, paddingBottom: 4 }}>
             <table className="tbl">
               <tbody>
                 <tr>
-                  <th>Tab</th>
-                  <th>Endpoint</th>
+                  <th>{t("Tab")}</th>
+                  <th>{t("Endpoint")}</th>
                 </tr>
                 <tr>
                   <td>images</td>
@@ -186,13 +187,12 @@ export default function Stock() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Rate</span>
-            <span className="meta">1 000 RPD on search</span>
+            <span className="panel-title">{t("Rate")}</span>
+            <span className="meta">{t("1 000 RPD on search")}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div className="hint" style={{ margin: 0 }}>
-              Stock search is rate-limited per day rather than priced. X-Forge counts every outbound call in the same shaper the generators use,
-              so a burst of searches cannot starve a render of its rate budget.
+              {t("Stock search is rate-limited per day rather than priced. X-Forge counts every outbound call in the same shaper the generators use, so a burst of searches cannot starve a render of its rate budget.")}
             </div>
           </div>
         </div>

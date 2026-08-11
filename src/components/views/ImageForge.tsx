@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import {
   Dropzone,
@@ -64,6 +65,7 @@ const TOOLS = [
 ] as const;
 
 export default function ImageForge() {
+  const t = useT();
   const { status } = useNav();
   const toast = useToast();
   const runner = useJobRunner();
@@ -92,7 +94,7 @@ export default function ImageForge() {
   const refs = useJson<{ references: Reference[] }>("/api/loras");
   const history = useJson<{ jobs: JobView[] }>("/api/jobs?kind=&limit=12", { intervalMs: 8000 });
 
-  const activeKind = TOOLS.find((t) => t.id === tool)!.kind;
+  const activeKind = TOOLS.find((x) => x.id === tool)!.kind;
   const viaMcp = activeKind === "image.generate";
 
   const params = useMemo(() => {
@@ -151,7 +153,7 @@ export default function ImageForge() {
 
   const generate = async () => {
     if (!prompt.trim()) {
-      toast.push("err", "A prompt is required");
+      toast.push("err", t("A prompt is required"));
       return;
     }
     await runner.run(activeKind, params, { label: prompt.slice(0, 60), via: viaMcp ? "mcp" : "rest" });
@@ -163,17 +165,17 @@ export default function ImageForge() {
     <>
       <div className="intro">
         <div>
-          <h1>IMAGE FORGE</h1>
+          <h1>{t("IMAGE FORGE")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
             {viaMcp
-              ? `MCP images_generate · ${catalogModels.length} models in the live catalogue`
-              : `POST ${restPathFor(activeKind)} · the operator's own key`}
+              ? `MCP images_generate · ${catalogModels.length} ${t("models in the live catalogue")}`
+              : `POST ${restPathFor(activeKind)} · ${t("the operator's own key")}`}
           </div>
         </div>
         <div className="topbar-spacer" />
-        {TOOLS.map((t) => (
-          <button key={t.id} className={`chip ${tool === t.id ? "active" : ""}`} onClick={() => setTool(t.id)}>
-            {t.name}
+        {TOOLS.map((item) => (
+          <button key={item.id} className={`chip ${tool === item.id ? "active" : ""}`} onClick={() => setTool(item.id)}>
+            {item.name}
           </button>
         ))}
       </div>
@@ -182,17 +184,17 @@ export default function ImageForge() {
         {/* Left: form */}
         <div style={{ display: "flex", gap: 10 }}>
           <div className="tool-picker">
-            {TOOLS.map((t) => (
+            {TOOLS.map((item) => (
               <div
-                key={t.id}
-                className={`tool-pick ${tool === t.id ? "active" : ""}`}
-                style={{ color: tool === t.id ? "var(--accent)" : "var(--text-3)" }}
-                onClick={() => setTool(t.id)}
+                key={item.id}
+                className={`tool-pick ${tool === item.id ? "active" : ""}`}
+                style={{ color: tool === item.id ? "var(--accent)" : "var(--text-3)" }}
+                onClick={() => setTool(item.id)}
                 role="button"
                 tabIndex={0}
               >
-                <span>{t.glyph}</span>
-                <span>{t.name}</span>
+                <span>{item.glyph}</span>
+                <span>{item.name}</span>
               </div>
             ))}
           </div>
@@ -201,24 +203,24 @@ export default function ImageForge() {
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, color: "var(--accent)" }}>
-                  {viaMcp ? "TEXT → IMAGE · CATALOGUE" : `TEXT → IMAGE · ${TOOLS.find((t) => t.id === tool)!.name}`}
+                  {viaMcp ? t("TEXT → IMAGE · CATALOGUE") : `${t("TEXT → IMAGE")} · ${TOOLS.find((x) => x.id === tool)!.name}`}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>
-                  {viaMcp ? "runs over the MCP session · priced before it runs" : "runs on the REST key · webhooks supported"}
+                  {viaMcp ? t("runs over the MCP session · priced before it runs") : t("runs on the REST key · webhooks supported")}
                 </div>
               </div>
 
               <Field
-                label="PROMPT"
+                label={t("PROMPT")}
                 rows={3}
                 value={prompt}
                 onChange={setPrompt}
-                placeholder="Editorial portrait of a glassblower at dusk…"
+                placeholder={t("Editorial portrait of a glassblower at dusk…")}
                 hint={
                   tool === "mystic" ? (
                     <>
-                      Characters via <span style={{ color: "var(--accent)" }}>@name</span> or{" "}
-                      <span style={{ color: "var(--accent)" }}>@name::strength</span>.
+                      Characters via <span style={{ color: "var(--accent)" }}>{t("@name")}</span> or{" "}
+                      <span style={{ color: "var(--accent)" }}>{t("@name::strength")}</span>.
                     </>
                   ) : undefined
                 }
@@ -226,9 +228,9 @@ export default function ImageForge() {
 
               {viaMcp ? (
                 <div>
-                  <div className="label">MODEL · {catalogModels.length} AVAILABLE</div>
+                  <div className="label">{t("MODEL · {n} AVAILABLE", { n: catalogModels.length })}</div>
                   <select className="select" value={catalogSlug} onChange={(e) => setCatalogSlug(e.target.value)}>
-                    <option value="auto">auto — the server picks from the prompt</option>
+                    <option value="auto">{t("auto — the server picks from the prompt")}</option>
                     {catalogModels.map((m) => (
                       <option key={m.slug} value={m.slug}>
                         {m.name}
@@ -241,14 +243,14 @@ export default function ImageForge() {
                 </div>
               ) : tool === "mystic" ? (
                 <div>
-                  <div className="label">MODEL</div>
+                  <div className="label">{t("MODEL")}</div>
                   <Seg options={MYSTIC_MODELS} value={model} onChange={setModel} wrap />
-                  <div className="hint">realism — realistic palette, “less AI look”.</div>
+                  <div className="hint">{t("realism — realistic palette, “less AI look”.")}</div>
                 </div>
               ) : null}
 
               <div>
-                <div className="label">ASPECT RATIO</div>
+                <div className="label">{t("ASPECT RATIO")}</div>
                 {viaMcp ? (
                   <Seg options={MCP_ASPECTS} value={mcpAspect} onChange={setMcpAspect} wrap />
                 ) : (
@@ -259,12 +261,12 @@ export default function ImageForge() {
               {!viaMcp ? (
                 <div style={{ display: "flex", gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <div className="label">RESOLUTION</div>
+                    <div className="label">{t("RESOLUTION")}</div>
                     <Seg options={RESOLUTIONS} value={resolution} onChange={setResolution} />
                   </div>
                   {tool === "mystic" ? (
                     <div style={{ flex: 1 }}>
-                      <div className="label">ENGINE</div>
+                      <div className="label">{t("ENGINE")}</div>
                       <select className="select" value={engine} onChange={(e) => setEngine(e.target.value as (typeof ENGINES)[number])}>
                         {ENGINES.map((e) => (
                           <option key={e} value={e}>
@@ -280,49 +282,49 @@ export default function ImageForge() {
               {tool === "mystic" && !viaMcp ? (
                 <>
                   <Slider
-                    label="CREATIVE DETAILING"
+                    label={t("CREATIVE DETAILING")}
                     value={detailing}
                     min={0}
                     max={100}
                     onChange={setDetailing}
-                    hint="High values = more detail per pixel, risk of “HDR look” and stray artifacts."
+                    hint={t("High values = more detail per pixel, risk of “HDR look” and stray artifacts.")}
                   />
-                  <Toggle on={fixed} onChange={setFixed} label="FIXED GENERATION · same seed behavior" />
-                  <Toggle on={nsfwFilter} onChange={setNsfwFilter} label="FILTER NSFW · locked true on API" />
+                  <Toggle on={fixed} onChange={setFixed} label={t("FIXED GENERATION · same seed behavior")} />
+                  <Toggle on={nsfwFilter} onChange={setNsfwFilter} label={t("FILTER NSFW · locked true on API")} />
 
                   <div className="well" style={{ padding: "10px 12px" }}>
                     <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: "var(--accent)", marginBottom: 8 }}>
-                      REFERENCES &amp; STYLE
+                      {t("REFERENCES & STYLE")}
                     </div>
                     <Dropzone
-                      label="⊕ structure_reference"
-                      hint="shape / composition guidance"
+                      label={t("⊕ structure_reference")}
+                      hint={t("shape / composition guidance")}
                       accept="image/*"
                       value={structure}
                       onChange={setStructure}
                       minHeight={64}
                     />
                     <div style={{ height: 8 }} />
-                    <Slider label="STRUCTURE STRENGTH" value={structureStrength} min={0} max={100} onChange={setStructureStrength} />
+                    <Slider label={t("STRUCTURE STRENGTH")} value={structureStrength} min={0} max={100} onChange={setStructureStrength} />
                     <div style={{ height: 10 }} />
                     <Dropzone
-                      label="⊕ style_reference"
-                      hint="aesthetic transfer — the most powerful Mystic control"
+                      label={t("⊕ style_reference")}
+                      hint={t("aesthetic transfer — the most powerful Mystic control")}
                       accept="image/*"
                       value={styleRef}
                       onChange={setStyleRef}
                       minHeight={64}
                     />
                     <div style={{ height: 8 }} />
-                    <Slider label="ADHERENCE" value={adherence} min={0} max={100} onChange={setAdherence} />
+                    <Slider label={t("ADHERENCE")} value={adherence} min={0} max={100} onChange={setAdherence} />
                     <div style={{ height: 8 }} />
-                    <Slider label="STYLE HDR" value={styleHdr} min={0} max={100} onChange={setStyleHdr} />
-                    <div className="hint">References disable LoRAs silently — no error is returned.</div>
+                    <Slider label={t("STYLE HDR")} value={styleHdr} min={0} max={100} onChange={setStyleHdr} />
+                    <div className="hint">{t("References disable LoRAs silently — no error is returned.")}</div>
                   </div>
 
                   <div className="well" style={{ padding: "10px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: "var(--accent)" }}>STYLING · LORA</span>
+                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: "var(--accent)" }}>{t("STYLING · LORA")}</span>
                       <span className="tag">GET /v1/ai/loras</span>
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -339,21 +341,21 @@ export default function ImageForge() {
                         ))
                       ) : (
                         <span className="dim" style={{ fontSize: 9.5 }}>
-                          no trained references on this account
+                          {t("no trained references on this account")}
                         </span>
                       )}
                     </div>
                     <div className="hint">Train new ones in 3D &amp; Soul — LoRAs apply to the default model only.</div>
                   </div>
 
-                  <Field label="WEBHOOK_URL · OPTIONAL" value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
+                  <Field label={t("WEBHOOK_URL · OPTIONAL")} value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
                 </>
               ) : null}
 
               <button className="btn primary" style={{ width: "100%", marginTop: "auto" }} disabled={runner.busy} onClick={generate}>
-                {runner.busy ? "◷ WORKING…" : `✦ GENERATE · ≈ ${est?.credits ?? "?"} CREDITS`}
+                {runner.busy ? t("◷ WORKING…") : `${t("✦ GENERATE")} · ≈ ${est?.credits ?? "?"} ${t("CREDITS")}`}
               </button>
-              {est?.willNeedApproval ? <div className="hint">Over the approval threshold — a confirmation link will be issued.</div> : null}
+              {est?.willNeedApproval ? <div className="hint">{t("Over the approval threshold — a confirmation link will be issued.")}</div> : null}
               {est?.reason ? <div className="hint">{est.reason}</div> : null}
             </div>
           </div>
@@ -363,13 +365,13 @@ export default function ImageForge() {
         <div className="workspace" style={{ minHeight: 640, alignItems: "stretch", justifyContent: "flex-start", padding: 14 }}>
           <div className="tabs" style={{ marginBottom: 4 }}>
             <button className={`chip ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")}>
-              OUTPUT
+              {t("OUTPUT")}
             </button>
             <button className={`chip ${tab === "history" ? "active" : ""}`} onClick={() => setTab("history")}>
-              HISTORY
+              {t("HISTORY")}
             </button>
             <button className={`chip ${tab === "request" ? "active" : ""}`} onClick={() => setTab("request")}>
-              REQUEST
+              {t("REQUEST")}
             </button>
             <span style={{ flex: 1 }} />
             {runner.job ? (
@@ -390,17 +392,17 @@ export default function ImageForge() {
                   href={runner.job?.assets[0]?.url}
                   download
                 >
-                  ⇩ DOWNLOAD
+                  {t("⇩ DOWNLOAD")}
                 </a>
-                <button className="btn" style={{ flex: 1 }} disabled={!runner.job?.assets.length} onClick={() => toast.push("info", "Open Upscale Studio and pick this asset from the vault")}>
-                  ⇱ UPSCALE
+                <button className="btn" style={{ flex: 1 }} disabled={!runner.job?.assets.length} onClick={() => toast.push("info", t("Open Upscale Studio and pick this asset from the vault"))}>
+                  {t("⇱ UPSCALE")}
                 </button>
                 <button className="btn" style={{ flex: 1 }} disabled={!runner.job} onClick={() => runner.cancel()}>
-                  ✕ CANCEL
+                  {t("✕ CANCEL")}
                 </button>
               </div>
               <div className="hint" style={{ textAlign: "center" }}>
-                Results are downloaded into the local vault immediately — provider URLs expire in about 24 h.
+                {t("Results are downloaded into the local vault immediately — provider URLs expire in about 24 h.")}
               </div>
             </>
           ) : tab === "history" ? (
@@ -435,7 +437,7 @@ export default function ImageForge() {
         <div className="panel" style={{ alignSelf: "start" }}>
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Model Catalog</span>
+            <span className="panel-title">{t("Model Catalog")}</span>
             <span style={{ flex: 1 }} />
             <span className="chip" style={{ minHeight: 22, fontSize: 8.5 }}>
               {catalogModels.length}
@@ -463,7 +465,7 @@ export default function ImageForge() {
               ))
             ) : (
               <div className="empty-state">
-                <div className="nav-sub">connect MCP to read the catalogue</div>
+                <div className="nav-sub">{t("connect MCP to read the catalogue")}</div>
               </div>
             )}
           </div>

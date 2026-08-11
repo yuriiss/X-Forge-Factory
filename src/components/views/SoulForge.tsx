@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { Dropzone, Field, JobResult, Seg, postJson, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
@@ -31,6 +32,7 @@ interface Reference {
 }
 
 export default function SoulForge() {
+  const t = useT();
   const toast = useToast();
   const runner = useJobRunner();
   const [source, setSource] = useState<Upload | null>(null);
@@ -50,7 +52,7 @@ export default function SoulForge() {
 
   const generate = async () => {
     if (!source?.creationIdentifier) {
-      toast.push("err", "Drop an image first — 3D generation starts from a picture, not from text");
+      toast.push("err", t("Drop an image first — 3D generation starts from a picture, not from text"));
       return;
     }
     await runner.run("model3d.generate", params, { label: `3d · ${source.name}`, via: "mcp" });
@@ -62,25 +64,25 @@ export default function SoulForge() {
         <div>
           <h1>3D &amp; SOUL</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            models3d_generate · trained characters and styles used by every generator
+            {t("models3d_generate · trained characters and styles used by every generator")}
           </div>
         </div>
         <div className="topbar-spacer" />
-        <span className="badge blue">MCP-POWERED</span>
+        <span className="badge blue">{t("MCP-POWERED")}</span>
       </div>
 
       <div className="grid cols-3">
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Image → 3D</span>
+            <span className="panel-title">{t("Image → 3D")}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">models3d_generate</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Dropzone
-              label="⊕ source image"
-              hint="a single clean subject gives the best topology"
+              label={t("⊕ source image")}
+              hint={t("a single clean subject gives the best topology")}
               accept="image/*"
               value={source}
               onChange={setSource}
@@ -88,18 +90,18 @@ export default function SoulForge() {
               minHeight={110}
             />
             <div>
-              <div className="label">MODEL</div>
+              <div className="label">{t("MODEL")}</div>
               <Seg options={MODELS_3D} value={model} onChange={setModel} wrap />
-              <div className="hint">tripo-p1 is fast · tripo-v31 is higher quality · trellis-2 is a different reconstruction.</div>
+              <div className="hint">{t("tripo-p1 is fast · tripo-v31 is higher quality · trellis-2 is a different reconstruction.")}</div>
             </div>
             <div>
-              <div className="label">TEXTURE QUALITY</div>
+              <div className="label">{t("TEXTURE QUALITY")}</div>
               <Seg options={TEXTURES} value={texture} onChange={setTexture} />
             </div>
             <button className="btn primary" style={{ width: "100%" }} disabled={runner.busy} onClick={generate}>
-              {runner.busy ? "◷ RECONSTRUCTING…" : `◈ GENERATE MODEL · ≈ ${est?.credits ?? "?"} CR`}
+              {runner.busy ? t("◷ RECONSTRUCTING…") : `${t("◈ GENERATE MODEL")} · ≈ ${est?.credits ?? "?"} ${t("CR")}`}
             </button>
-            <div className="hint">Output is a GLB, downloaded into the vault like every other asset.</div>
+            <div className="hint">{t("Output is a GLB, downloaded into the vault like every other asset.")}</div>
           </div>
         </div>
 
@@ -107,7 +109,7 @@ export default function SoulForge() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Result</span>
+              <span className="panel-title">{t("Result")}</span>
               <span style={{ flex: 1 }} />
               {runner.job ? <span className="badge amber">{runner.job.status}</span> : null}
             </div>
@@ -119,7 +121,7 @@ export default function SoulForge() {
                 </a>
               ) : null}
               <div className="hint">
-                A GLB does not preview in a browser without a viewer — it is stored intact and opens in any 3D tool.
+                {t("A GLB does not preview in a browser without a viewer — it is stored intact and opens in any 3D tool.")}
               </div>
             </div>
           </div>
@@ -127,37 +129,37 @@ export default function SoulForge() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Train Soul Reference</span>
+              <span className="panel-title">{t("Train Soul Reference")}</span>
               <span style={{ flex: 1 }} />
               <span className="tag">POST /v1/ai/loras/{refType === "character" ? "characters" : "styles"}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <div className="label">TYPE</div>
+                <div className="label">{t("TYPE")}</div>
                 <Seg options={REF_TYPES} value={refType} onChange={setRefType} />
               </div>
-              <Field label="NAME" value={refName} onChange={setRefName} placeholder="john" hint="This is what you type in a prompt afterwards." />
+              <Field label={t("NAME")} value={refName} onChange={setRefName} placeholder="john" hint={t("This is what you type in a prompt afterwards.")} />
               {refType === "character" ? (
                 <div>
-                  <div className="label">GENDER</div>
+                  <div className="label">{t("GENDER")}</div>
                   <Seg options={GENDERS} value={gender} onChange={setGender} />
                 </div>
               ) : null}
               <div>
-                <div className="label">QUALITY</div>
+                <div className="label">{t("QUALITY")}</div>
                 <Seg options={QUALITIES} value={quality} onChange={setQuality} />
               </div>
 
               <div>
-                <div className="label">TRAINING IMAGES · {trainImages.length} ADDED</div>
+                <div className="label">{t("TRAINING IMAGES · {n} ADDED", { n: trainImages.length })}</div>
                 <Dropzone
-                  label="⊕ add a training image"
-                  hint="4—12 consistent images of the same face, outfit or art style"
+                  label={t("⊕ add a training image")}
+                  hint={t("4—12 consistent images of the same face, outfit or art style")}
                   accept="image/*"
                   value={null}
                   onChange={(u) => {
                     if (u?.assetUrl) setTrainImages((prev) => [...prev, { url: u.assetUrl!, name: u.name }]);
-                    else if (u) toast.push("err", "That upload was not staged — training needs hosted images");
+                    else if (u) toast.push("err", t("That upload was not staged — training needs hosted images"));
                   }}
                   needStaging
                   minHeight={70}
@@ -187,7 +189,7 @@ export default function SoulForge() {
                       quality,
                       images: trainImages.map((i) => i.url),
                     });
-                    toast.push("ok", "Training started — it appears in the list when Magnific finishes");
+                    toast.push("ok", t("Training started — it appears in the list when Magnific finishes"));
                     setTrainImages([]);
                     refs.reload();
                   } catch (e) {
@@ -197,7 +199,7 @@ export default function SoulForge() {
                   }
                 }}
               >
-                {training ? "◷ STARTING…" : `✚ START TRAINING${trainImages.length < 4 ? " · NEEDS 4+ IMAGES" : ""}`}
+                {training ? t("◷ STARTING…") : `${t("✚ START TRAINING")}${trainImages.length < 4 ? ` · ${t("NEEDS 4+ IMAGES")}` : ""}`}
               </button>
               <div className="hint">
                 Training runs on Magnific's side and takes a while; the reference shows up below as READY when it is done.
@@ -209,9 +211,9 @@ export default function SoulForge() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Trained References</span>
+            <span className="panel-title">{t("Trained References")}</span>
             <span style={{ flex: 1 }} />
-            <span className="tag">loras · library</span>
+            <span className="tag">{t("loras · library")}</span>
           </div>
           <div className="panel-body scroll-y" style={{ paddingTop: 8, paddingBottom: 8, maxHeight: 460 }}>
             {refs.data?.references.length ? (
@@ -227,19 +229,19 @@ export default function SoulForge() {
                     {r.name} · {r.type}
                   </span>
                   <span className={`badge ${r.status === "completed" || r.status === "ready" ? "green" : "amber"}`}>
-                    {(r.status || "ready").toUpperCase()}
+                    {(r.status || t("ready")).toUpperCase()}
                   </span>
                 </div>
               ))
             ) : (
               <div className="empty-state">
-                <div className="nav-sub">no trained references on this account</div>
+                <div className="nav-sub">{t("no trained references on this account")}</div>
               </div>
             )}
             {refs.data?.library.length ? (
               <>
                 <div className="eyebrow" style={{ marginTop: 12, marginBottom: 6 }}>
-                  LIBRARY · MCP
+                  {t("LIBRARY · MCP")}
                 </div>
                 {refs.data.library.map((l) => (
                   <div className="provider-row" key={l.id}>
@@ -254,8 +256,8 @@ export default function SoulForge() {
             ) : null}
           </div>
           <div className="panel-foot">
-            Use a character in a Mystic prompt as <span style={{ color: "var(--accent)" }}>@name</span> or{" "}
-            <span style={{ color: "var(--accent)" }}>@name::200</span>. References override LoRAs silently.
+            Use a character in a Mystic prompt as <span style={{ color: "var(--accent)" }}>{t("@name")}</span> or{" "}
+            <span style={{ color: "var(--accent)" }}>{t("@name::200")}</span>. References override LoRAs silently.
           </div>
         </div>
       </div>

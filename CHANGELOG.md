@@ -3,6 +3,55 @@
 All notable changes to X-Forge. Format follows [Keep a Changelog](https://keepachangelog.com/1.1.0/);
 versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2] — 2026-08-11
+
+Two languages, a viewer that actually shows what was made, and a library that lives where
+the operator's notes already live.
+
+### Added
+
+- **Ukrainian** — the console speaks English and Ukrainian, switched from a picker in the
+  topbar and remembered per browser. The English string is the translation key, so an
+  untranslated line renders in English instead of showing an identifier. Model slugs,
+  endpoint paths and provider states stay as the provider spells them in both languages:
+  translating them would break the one thing they are for, matching the API's own answers.
+- **Ukrainian guidebook** — `GUIDEBOOK.uk.md` and `docs/X-Forge-Guidebook-UK.pdf`, with the
+  cover, running heads and screenshots in the same language as the text. The contents list
+  is regenerated from the translated headings, since GitHub anchors do not survive a
+  translation.
+- **The vault lives in the Obsidian vault** — assets are written to
+  `/home/yuriis/Obsidian/X-FORGE/` (configurable via `FORGE_VAULT_DIR`), sorted into
+  `image / video / audio / 3D / vector`, named by date and label instead of by random id,
+  with a markdown note beside each file carrying the prompt, model and cost as frontmatter.
+  Existing vaults migrate on first boot, once, by rename where possible.
+- **Full-size viewer** — clicking a gallery tile opens it: wheel-zoom toward the pointer,
+  drag-pan, `1:1`, arrow keys between assets, players for video and audio.
+- **3D viewer** — GLB models render and orbit in the browser instead of being a file you
+  had to open elsewhere to see.
+- `npm run i18n:audit` — reports which visible strings have no translation yet, which reach
+  `t` as a variable, and which dictionary entries nothing asks for any more.
+- `capture-screens.mjs --lang uk` captures a second screenshot set for the translated
+  guidebook.
+
+### Changed
+
+- **Licence: PolyForm Noncommercial → GNU AGPL-3.0-or-later.** Copyleft that survives being
+  run as a service, rather than a licence that merely asks commercial users not to.
+- The topbar date is formatted by `Intl` in the active language rather than from a table of
+  English month names.
+- **Creations** distinguishes what is on this machine from what is not: the local library
+  shows its real path, file count and size, while folders and spaces are labelled `REMOTE`
+  — they are folders in the Magnific account, not directories here.
+
+### Fixed
+
+- The MCP outline parser treated nested lines as top-level fields, which is why a folder
+  named *Personal* appeared in the console as `WORKSPACE`.
+- Panels could render empty forever under React's development double-mount: the in-flight
+  guard in `useJson` was held in a ref that survived the discarded mount.
+- The language provider sat inside the component that consumed it, so the shell read the
+  context default and would have stayed English whatever the picker said.
+
 ## [0.0.1] — 2026-08-11
 
 First public release. Sixteen screens, two live surfaces, and a job engine that treats
@@ -74,4 +123,5 @@ refuses base64; `improve-prompt` requires an undocumented `type`; the MCP list t
 in an indented outline rather than JSON; `simulate_cost` takes different arguments from the
 tool it prices; background removal serves PNG as `application/octet-stream`.
 
+[0.0.2]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.2
 [0.0.1]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.1

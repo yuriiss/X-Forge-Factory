@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { Dropzone, ago, bytes, useJson, useToast, type Upload } from "../ui";
 import { useNav } from "../Console";
 import Lightbox, { ModelViewer, type LightboxAsset } from "../Lightbox";
@@ -32,6 +33,7 @@ interface VaultItem {
 }
 
 export default function Creations() {
+  const t = useT();
   const toast = useToast();
   const { status } = useNav();
   const [scope, setScope] = useState<"vault" | "account">("vault");
@@ -55,17 +57,17 @@ export default function Creations() {
     <>
       <div className="intro">
         <div>
-          <h1>CREATIONS</h1>
+          <h1>{t("CREATIONS")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            {scope === "vault" ? "local vault — downloaded, permanent, playable" : "account history — GET /v1/creations/recent, URLs expire"}
+            {scope === "vault" ? t("local vault — downloaded, permanent, playable") : t("account history — GET /v1/creations/recent, URLs expire")}
           </div>
         </div>
         <div className="topbar-spacer" />
         <button className={`chip ${scope === "vault" ? "active" : ""}`} onClick={() => { setScope("vault"); setPage(1); }}>
-          VAULT
+          {t("VAULT")}
         </button>
         <button className={`chip ${scope === "account" ? "active" : ""}`} onClick={() => { setScope("account"); setPage(1); }}>
-          ACCOUNT
+          {t("ACCOUNT")}
         </button>
       </div>
 
@@ -75,7 +77,7 @@ export default function Creations() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Type</span>
+              <span className="panel-title">{t("Type")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 7, paddingTop: 10 }}>
               {KINDS.map((k) => (
@@ -89,7 +91,7 @@ export default function Creations() {
                   }}
                 >
                   <span style={{ fontSize: 12 }}>{k === "video" ? "▶" : k === "audio" ? "♫" : k === "3d" ? "◈" : k === "vector" ? "⌗" : "▤"}</span>
-                  <span style={{ flex: 1, fontSize: 11, color: "var(--text-2)" }}>{k}</span>
+                  <span style={{ flex: 1, fontSize: 11, color: "var(--text-2)" }}>{t(k)}</span>
                 </div>
               ))}
             </div>
@@ -98,25 +100,24 @@ export default function Creations() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot green" />
-              <span className="panel-title">Library</span>
+              <span className="panel-title">{t("Library")}</span>
               <span style={{ flex: 1 }} />
-              <span className="tag">ON DISK</span>
+              <span className="tag">{t("ON DISK")}</span>
             </div>
             <div className="panel-body" style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="code-card" style={{ fontSize: 9.5, whiteSpace: "normal", wordBreak: "break-all" }}>
                 {status?.vault.root ?? "…"}
               </div>
               <div className="kv">
-                <span>files</span>
+                <span>{t("files")}</span>
                 <b>{status?.vault.files ?? "—"}</b>
               </div>
               <div className="kv">
-                <span>size</span>
+                <span>{t("size")}</span>
                 <b>{status ? bytes(status.vault.bytes) : "—"}</b>
               </div>
               <div className="hint" style={{ margin: 0 }}>
-                Sorted into image / video / audio / 3D / vector, named by date and label, with a markdown note beside
-                each file.
+                {t("Sorted into image / video / audio / 3D / vector, named by date and label, with a markdown note beside each file.")}
               </div>
             </div>
           </div>
@@ -124,9 +125,9 @@ export default function Creations() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Folders</span>
+              <span className="panel-title">{t("Folders")}</span>
               <span style={{ flex: 1 }} />
-              <span className="tag">REMOTE</span>
+              <span className="tag">{t("REMOTE")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 7, paddingTop: 10 }}>
               {folders.data?.folders.length ? (
@@ -139,16 +140,16 @@ export default function Creations() {
                   </div>
                 ))
               ) : (
-                <div className="hint">{folders.data?.note ?? "no folders"}</div>
+                <div className="hint">{folders.data?.note ?? t("no folders")}</div>
               )}
             </div>
-            <div className="panel-foot">Folders in your Magnific account, not on this machine — where the provider files its own copies.</div>
+            <div className="panel-foot">{t("Folders in your Magnific account, not on this machine — where the provider files its own copies.")}</div>
           </div>
 
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Spaces</span>
+              <span className="panel-title">{t("Spaces")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 7, paddingTop: 10 }}>
               {spaces.data?.spaces.length ? (
@@ -162,10 +163,10 @@ export default function Creations() {
                   </div>
                 ))
               ) : (
-                <div className="hint">{spaces.data?.note ?? "no spaces"}</div>
+                <div className="hint">{spaces.data?.note ?? t("no spaces")}</div>
               )}
             </div>
-            <div className="panel-foot">Also remote: the infinite canvases where Flows are built.</div>
+            <div className="panel-foot">{t("Also remote: the infinite canvases where Flows are built.")}</div>
           </div>
         </div>
 
@@ -173,11 +174,11 @@ export default function Creations() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Gallery</span>
+            <span className="panel-title">{t("Gallery")}</span>
             <span style={{ flex: 1 }} />
             <div className="field" style={{ minHeight: 30, width: 210 }}>
               <input
-                placeholder="⌕ label or model…"
+                placeholder={t("⌕ label or model…")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -217,7 +218,7 @@ export default function Creations() {
                       ) : c.kind === "3d" ? (
                         <span style={{ display: "grid", placeItems: "center", gap: 4 }}>
                           <span style={{ fontSize: 22 }}>◈</span>
-                          <span className="badge" style={{ fontSize: 7.5 }}>GLB</span>
+                          <span className="badge" style={{ fontSize: 7.5 }}>{t("GLB")}</span>
                         </span>
                       ) : (
                         <span>{c.kind === "audio" ? "♫" : "✦"}</span>
@@ -241,21 +242,21 @@ export default function Creations() {
                   <span>◇</span>
                   <span>✦</span>
                 </div>
-                <div className="empty-title">{scope === "vault" ? "The vault is empty" : "No account creations"}</div>
-                <div className="nav-sub">generate something and it lands here automatically</div>
+                <div className="empty-title">{scope === "vault" ? t("The vault is empty") : t("No account creations")}</div>
+                <div className="nav-sub">{t("generate something and it lands here automatically")}</div>
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, color: "var(--dim)", fontSize: 10 }}>
               <span>
-                page {page} · {list.data?.items.length ?? 0} shown{list.data?.total ? ` · ${list.data.total} total` : ""}
+                page {page} · {list.data?.items.length ?? 0} shown{list.data?.total ? ` · ${list.data.total} ${t("total")}` : ""}
               </span>
               <span>
                 <span className="link" onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                  ‹ prev
+                  {t("‹ prev")}
                 </span>
                 {" · "}
                 <span className="link" onClick={() => setPage((p) => p + 1)}>
-                  next ›
+                  {t("next ›")}
                 </span>
               </span>
             </div>
@@ -267,7 +268,7 @@ export default function Creations() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Inspector</span>
+              <span className="panel-title">{t("Inspector")}</span>
               <span style={{ flex: 1 }} />
               {selected ? <span className="badge green">{selected.origin.toUpperCase()}</span> : null}
             </div>
@@ -277,7 +278,7 @@ export default function Creations() {
                   <div
                     className="result-frame g1 clickable"
                     style={{ height: 190 }}
-                    title="Open full size"
+                    title={t("Open full size")}
                     onClick={() => {
                       const i = list.data?.items.findIndex((x) => x.id === selected.id) ?? -1;
                       if (i >= 0 && selected.url) setViewing(i);
@@ -297,27 +298,27 @@ export default function Creations() {
                     )}
                   </div>
                   <div className="kv" style={{ marginTop: 10 }}>
-                    <span>label</span>
+                    <span>{t("label")}</span>
                     <b className="truncate">{selected.label}</b>
                   </div>
                   <div className="kv">
-                    <span>kind</span>
+                    <span>{t("kind")}</span>
                     <b>{selected.kind}</b>
                   </div>
                   {selected.mime ? (
                     <div className="kv">
-                      <span>mime</span>
+                      <span>{t("mime")}</span>
                       <b>{selected.mime}</b>
                     </div>
                   ) : null}
                   {selected.bytes ? (
                     <div className="kv">
-                      <span>size</span>
+                      <span>{t("size")}</span>
                       <b>{bytes(selected.bytes)}</b>
                     </div>
                   ) : null}
                   <div className="kv">
-                    <span>created</span>
+                    <span>{t("created")}</span>
                     <b>{new Date(selected.created).toLocaleString()}</b>
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -330,7 +331,7 @@ export default function Creations() {
                         if (i >= 0) setViewing(i);
                       }}
                     >
-                      ⤢ OPEN
+                      {t("⤢ OPEN")}
                     </button>
                     <a className="btn" style={{ flex: 1 }} href={selected.url} download>
                       ⇩
@@ -340,15 +341,15 @@ export default function Creations() {
                       style={{ flex: 1 }}
                       onClick={() => {
                         void navigator.clipboard.writeText(new URL(selected.url ?? "", window.location.origin).toString());
-                        toast.push("ok", "URL copied");
+                        toast.push("ok", t("URL copied"));
                       }}
                     >
-                      ⧉ URL
+                      {t("⧉ URL")}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="hint">Pick something from the gallery.</div>
+                <div className="hint">{t("Pick something from the gallery.")}</div>
               )}
             </div>
           </div>
@@ -356,19 +357,19 @@ export default function Creations() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Import Asset</span>
-              <span className="meta">vault + MCP</span>
+              <span className="panel-title">{t("Import Asset")}</span>
+              <span className="meta">{t("vault + MCP")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div className="hint" style={{ margin: 0 }}>
-                One drop stores the file locally, stages it for the REST endpoints and imports it as an MCP creation.
+                {t("One drop stores the file locally, stages it for the REST endpoints and imports it as an MCP creation.")}
               </div>
-              <Dropzone label="⊕ drop file" hint="image / video / audio" value={upload} onChange={setUpload} needCreation needStaging minHeight={80} />
+              <Dropzone label={t("⊕ drop file")} hint={t("image / video / audio")} value={upload} onChange={setUpload} needCreation needStaging minHeight={80} />
               {upload ? (
                 <div className="ok-box">
                   Stored as {upload.assetId}
-                  {upload.creationIdentifier ? ` · creation ${upload.creationIdentifier}` : ""}
-                  {upload.assetUrl ? " · staged" : ""}
+                  {upload.creationIdentifier ? ` · ${t("creation")} ${upload.creationIdentifier}` : ""}
+                  {upload.assetUrl ? t(" · staged") : ""}
                 </div>
               ) : null}
             </div>
@@ -419,6 +420,7 @@ function toLightbox(item: VaultItem): LightboxAsset {
  * a gallery of stills should not pay for a 3D engine it never uses.
  */
 function InlineModel({ url }: { url: string }) {
+  const t = useT();
   const [ready, setReady] = useState(false);
   useEffect(() => {
     let alive = true;
@@ -433,7 +435,7 @@ function InlineModel({ url }: { url: string }) {
       <div style={{ display: "grid", placeItems: "center", gap: 8 }}>
         <span className="spinner" />
         <span className="dim" style={{ fontSize: 9, letterSpacing: 1.5 }}>
-          LOADING 3D
+          {t("LOADING 3D")}
         </span>
       </div>
     );

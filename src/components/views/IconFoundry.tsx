@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { Field, JobResult, Seg, useEstimate, useJobRunner, useJson, useToast } from "../ui";
 
@@ -24,6 +25,7 @@ interface IconItem {
 }
 
 export default function IconFoundry() {
+  const t = useT();
   const toast = useToast();
   const runner = useJobRunner();
   const [prompt, setPrompt] = useState("Minimal line icon of a lighthouse inside a circle");
@@ -39,9 +41,9 @@ export default function IconFoundry() {
     <>
       <div className="intro">
         <div>
-          <h1>ICON FOUNDRY</h1>
+          <h1>{t("ICON FOUNDRY")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            text → SVG · vector library search · downloads follow plan rules
+            {t("text → SVG · vector library search · downloads follow plan rules")}
           </div>
         </div>
       </div>
@@ -50,14 +52,14 @@ export default function IconFoundry() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Generate Icon</span>
+            <span className="panel-title">{t("Generate Icon")}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">images_generate_svg</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Field label="PROMPT" rows={2} value={prompt} onChange={setPrompt} />
+            <Field label={t("PROMPT")} rows={2} value={prompt} onChange={setPrompt} />
             <div>
-              <div className="label">STYLE</div>
+              <div className="label">{t("STYLE")}</div>
               <Seg options={STYLES} value={style} onChange={setStyle} wrap />
             </div>
             <button
@@ -65,16 +67,16 @@ export default function IconFoundry() {
               style={{ width: "100%" }}
               disabled={runner.busy}
               onClick={() => {
-                if (!prompt.trim()) return toast.push("err", "Describe the icon first");
+                if (!prompt.trim()) return toast.push("err", t("Describe the icon first"));
                 return runner.run("icon.generate", params, { label: prompt.slice(0, 50), via: "mcp" });
               }}
             >
-              {runner.busy ? "◷ DRAWING…" : `✚ GENERATE SVG · ≈ ${est?.credits ?? "?"} CR`}
+              {runner.busy ? t("◷ DRAWING…") : `${t("✚ GENERATE SVG")} · ≈ ${est?.credits ?? "?"} ${t("CR")}`}
             </button>
 
             <div className="well" style={{ padding: 12 }}>
               <div className="eyebrow" style={{ marginBottom: 8 }}>
-                RESULT
+                {t("RESULT")}
               </div>
               <JobResult job={runner.job} blocked={runner.blocked} error={runner.error} placeholder="◉" height={180} />
               {runner.job?.assets.length ? (
@@ -83,19 +85,19 @@ export default function IconFoundry() {
                 </a>
               ) : null}
             </div>
-            <div className="hint">Vector output — scales without loss, unlike an upscaled raster icon.</div>
+            <div className="hint">{t("Vector output — scales without loss, unlike an upscaled raster icon.")}</div>
           </div>
         </div>
 
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Icon Library</span>
+            <span className="panel-title">{t("Icon Library")}</span>
             <span className="meta">GET /v1/icons</span>
             <span style={{ flex: 1 }} />
             <div className="field" style={{ minHeight: 30, width: 200 }}>
               <input
-                placeholder="⌕ search icons…"
+                placeholder={t("⌕ search icons…")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -108,7 +110,7 @@ export default function IconFoundry() {
             </button>
           </div>
           <div className="panel-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(72px,1fr))", gap: 10 }}>
-            {icons.loading ? <div className="hint">searching…</div> : null}
+            {icons.loading ? <div className="hint">{t("searching…")}</div> : null}
             {icons.error ? <div className="error-box">{icons.error}</div> : null}
             {icons.data?.items.map((i) => (
               <a
@@ -128,10 +130,10 @@ export default function IconFoundry() {
                 )}
               </a>
             ))}
-            {icons.data && !icons.data.items.length ? <div className="hint">nothing matched that search</div> : null}
+            {icons.data && !icons.data.items.length ? <div className="hint">{t("nothing matched that search")}</div> : null}
           </div>
           <div className="panel-foot">
-            Library icons are finished vectors — PNG / SVG / PDF. Below Business the plan caps downloads at 100 per day.
+            {t("Library icons are finished vectors — PNG / SVG / PDF. Below Business the plan caps downloads at 100 per day.")}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
@@ -29,6 +30,7 @@ interface StockItem {
 }
 
 export default function AudioLab() {
+  const t = useT();
   const toast = useToast();
   const music = useJobRunner();
   const sfx = useJobRunner();
@@ -75,7 +77,7 @@ export default function AudioLab() {
     <>
       <div className="intro">
         <div>
-          <h1>AUDIO LAB</h1>
+          <h1>{t("AUDIO LAB")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
             Music generation · sound effects · SAM isolation · {catalog.data?.voices.length ?? 0} TTS voices
           </div>
@@ -87,29 +89,29 @@ export default function AudioLab() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Music Generation</span>
+            <span className="panel-title">{t("Music Generation")}</span>
             <span style={{ flex: 1 }} />
             <span className="tag">POST /v1/ai/music-generation</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Field label="PROMPT · 10—2000 CHARS" rows={3} value={musicPrompt} onChange={setMusicPrompt} />
-            <Field label="NEGATIVE PROMPT" value={musicNegative} onChange={setMusicNegative} placeholder="vocals, distortion, drums" />
+            <Field label={t("PROMPT · 10—2000 CHARS")} rows={3} value={musicPrompt} onChange={setMusicPrompt} />
+            <Field label={t("NEGATIVE PROMPT")} value={musicNegative} onChange={setMusicNegative} placeholder={t("vocals, distortion, drums")} />
             <div>
-              <div className="label">LENGTH · SECONDS</div>
+              <div className="label">{t("LENGTH · SECONDS")}</div>
               <Seg options={MUSIC_LENGTHS} value={musicLength} onChange={setMusicLength} />
             </div>
-            <Field label="SEED · OPTIONAL" value={musicSeed} onChange={setMusicSeed} placeholder="random" />
+            <Field label={t("SEED · OPTIONAL")} value={musicSeed} onChange={setMusicSeed} placeholder="random" />
             <button
               className="btn primary"
               style={{ width: "100%" }}
               disabled={music.busy}
               onClick={() => music.run("audio.music", musicParams, { label: musicPrompt.slice(0, 50) })}
             >
-              {music.busy ? "◷ COMPOSING…" : `♫ GENERATE TRACK · ≈ ${musicEst?.credits ?? "?"} CR`}
+              {music.busy ? t("◷ COMPOSING…") : `${t("♫ GENERATE TRACK")} · ≈ ${musicEst?.credits ?? "?"} ${t("CR")}`}
             </button>
             <JobResult job={music.job} blocked={music.blocked} error={music.error} placeholder="♫" height={90} />
           </div>
-          <div className="panel-foot">Music is a task like any other — submit, poll, download into the vault.</div>
+          <div className="panel-foot">{t("Music is a task like any other — submit, poll, download into the vault.")}</div>
         </div>
 
         {/* SFX + isolation */}
@@ -117,14 +119,14 @@ export default function AudioLab() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Sound Effects</span>
+              <span className="panel-title">{t("Sound Effects")}</span>
               <span style={{ flex: 1 }} />
               <span className="tag">POST /v1/ai/sound-effects</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Field label="DESCRIPTION" rows={2} value={sfxPrompt} onChange={setSfxPrompt} />
+              <Field label={t("DESCRIPTION")} rows={2} value={sfxPrompt} onChange={setSfxPrompt} />
               <div>
-                <div className="label">DURATION · SECONDS</div>
+                <div className="label">{t("DURATION · SECONDS")}</div>
                 <Seg options={SFX_LENGTHS} value={sfxLength} onChange={setSfxLength} />
               </div>
               <button
@@ -133,7 +135,7 @@ export default function AudioLab() {
                 disabled={sfx.busy}
                 onClick={() => sfx.run("audio.sfx", { prompt: sfxPrompt, duration: sfxLength }, { label: sfxPrompt.slice(0, 40) })}
               >
-                {sfx.busy ? "◷ …" : "⚡ GENERATE SFX"}
+                {sfx.busy ? "◷ …" : t("⚡ GENERATE SFX")}
               </button>
               <JobResult job={sfx.job} blocked={sfx.blocked} error={sfx.error} placeholder="⚡" height={70} />
             </div>
@@ -142,27 +144,27 @@ export default function AudioLab() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Audio Isolation · SAM</span>
+              <span className="panel-title">{t("Audio Isolation · SAM")}</span>
               <span style={{ flex: 1 }} />
               <span className="tag">POST /v1/ai/audio-isolation</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Dropzone
-                label="⊕ audio or video file"
-                hint="isolate specific sounds — vocals, engine, rain…"
+                label={t("⊕ audio or video file")}
+                hint={t("isolate specific sounds — vocals, engine, rain…")}
                 accept="audio/*,video/*"
                 value={audioFile}
                 onChange={setAudioFile}
                 needStaging
                 minHeight={70}
               />
-              <Field label="TARGET SOUND" value={target} onChange={setTarget} placeholder="lead vocal" />
+              <Field label={t("TARGET SOUND")} value={target} onChange={setTarget} placeholder={t("lead vocal")} />
               <button
                 className="btn"
                 style={{ width: "100%" }}
                 disabled={isolate.busy || !audioFile}
                 onClick={() => {
-                  if (!audioFile) return toast.push("err", "Drop an audio or video file first");
+                  if (!audioFile) return toast.push("err", t("Drop an audio or video file first"));
                   return isolate.run(
                     "audio.isolate",
                     { audio: audioFile.assetUrl ?? audioFile.dataUrl, description: target },
@@ -170,7 +172,7 @@ export default function AudioLab() {
                   );
                 }}
               >
-                {isolate.busy ? "◷ …" : "◍ ISOLATE STEM"}
+                {isolate.busy ? "◷ …" : t("◍ ISOLATE STEM")}
               </button>
               <JobResult job={isolate.job} blocked={isolate.blocked} error={isolate.error} placeholder="◍" height={70} />
             </div>
@@ -181,20 +183,20 @@ export default function AudioLab() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Text to Speech</span>
+            <span className="panel-title">{t("Text to Speech")}</span>
             <span style={{ flex: 1 }} />
-            <span className="badge blue">MCP</span>
+            <span className="badge blue">{t("MCP")}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="hint" style={{ margin: 0 }}>
-              audio_tts is served by the MCP session — same credits, no extra key.
+              {t("audio_tts is served by the MCP session — same credits, no extra key.")}
             </div>
-            <Field label="TEXT" rows={3} value={ttsText} onChange={setTtsText} />
-            <Field label="FILTER VOICES" value={voiceQuery} onChange={setVoiceQuery} placeholder="name or language…" />
+            <Field label={t("TEXT")} rows={3} value={ttsText} onChange={setTtsText} />
+            <Field label={t("FILTER VOICES")} value={voiceQuery} onChange={setVoiceQuery} placeholder={t("name or language…")} />
             <div>
               <div className="label">VOICE · {catalog.data?.voices.length ?? 0} IN CATALOGUE</div>
               <select className="select" value={voiceId} onChange={(e) => setVoiceId(e.target.value)}>
-                <option value="">choose a voice…</option>
+                <option value="">{t("choose a voice…")}</option>
                 {voices.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
@@ -207,11 +209,11 @@ export default function AudioLab() {
             <div style={{ display: "flex", gap: 8 }}>
               <div className="stat" style={{ flex: 1 }}>
                 <div className="stat-value">{catalog.data?.voices.length ?? 0}</div>
-                <div className="stat-label">VOICES</div>
+                <div className="stat-label">{t("VOICES")}</div>
               </div>
               <div className="stat" style={{ flex: 1 }}>
                 <div className="stat-value">{ttsEst?.credits ?? "—"}</div>
-                <div className="stat-label">CREDITS</div>
+                <div className="stat-label">{t("CREDITS")}</div>
               </div>
             </div>
             <button
@@ -220,7 +222,7 @@ export default function AudioLab() {
               disabled={tts.busy || !voiceId}
               onClick={() => tts.run("audio.tts", { text: ttsText, voiceId }, { label: ttsText.slice(0, 40), via: "mcp" })}
             >
-              {tts.busy ? "◷ SYNTHESISING…" : "🎙 SYNTHESIZE"}
+              {tts.busy ? t("◷ SYNTHESISING…") : t("🎙 SYNTHESIZE")}
             </button>
             <JobResult job={tts.job} blocked={tts.blocked} error={tts.error} placeholder="🎙" height={70} />
           </div>
@@ -229,25 +231,25 @@ export default function AudioLab() {
 
       <div className="block-section">
         <div className="block-head">
-          <h2>Audio Libraries</h2>
-          <span className="meta">stock music and sound effects — search and preview</span>
+          <h2>{t("Audio Libraries")}</h2>
+          <span className="meta">{t("stock music and sound effects — search and preview")}</span>
           <span style={{ flex: 1 }} />
           <button className={`chip ${stockKind === "music" ? "active" : ""}`} onClick={() => setStockKind("music")}>
-            MUSIC
+            {t("MUSIC")}
           </button>
           <button className={`chip ${stockKind === "sfx" ? "active" : ""}`} onClick={() => setStockKind("sfx")}>
-            SFX
+            {t("SFX")}
           </button>
         </div>
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">{stockKind === "music" ? "Stock Music" : "SFX Library"}</span>
+            <span className="panel-title">{stockKind === "music" ? t("Stock Music") : t("SFX Library")}</span>
             <span className="meta">GET /v1/{stockKind === "music" ? "music" : "sound-effects"}</span>
             <span style={{ flex: 1 }} />
             <div className="field" style={{ minHeight: 30, width: 260 }}>
               <input
-                placeholder="⌕ lofi, cinematic, whoosh…"
+                placeholder={t("⌕ lofi, cinematic, whoosh…")}
                 value={stockQuery}
                 onChange={(e) => setStockQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -256,11 +258,11 @@ export default function AudioLab() {
               />
             </div>
             <button className="btn" onClick={() => setStockTerm(stockQuery)}>
-              ⌕ SEARCH
+              {t("⌕ SEARCH")}
             </button>
           </div>
           <div className="panel-body" style={{ paddingTop: 6, paddingBottom: 6 }}>
-            {stock.loading ? <div className="hint">searching…</div> : null}
+            {stock.loading ? <div className="hint">{t("searching…")}</div> : null}
             {stock.error ? <div className="error-box">{stock.error}</div> : null}
             {stock.data?.items.map((i) => (
               <div className="provider-row" key={i.id}>
@@ -270,18 +272,18 @@ export default function AudioLab() {
                 <span style={{ flex: 1 }} className="truncate">
                   {i.title}
                 </span>
-                {i.tags?.slice(0, 1).map((t) => (
-                  <span className="tag" key={t}>
-                    {t}
+                {i.tags?.slice(0, 1).map((tag) => (
+                  <span className="tag" key={tag}>
+                    {tag}
                   </span>
                 ))}
                 <span className="dim mono">{i.meta}</span>
               </div>
             ))}
-            {stock.data && !stock.data.items.length ? <div className="hint">nothing matched that search</div> : null}
+            {stock.data && !stock.data.items.length ? <div className="hint">{t("nothing matched that search")}</div> : null}
           </div>
           <div className="panel-foot">
-            {stock.data?.total ? `${stock.data.total} results in the catalogue · ` : ""}stock downloads follow plan rules, not credits.
+            {stock.data?.total ? `${stock.data.total} ${t("results in the catalogue")} · ` : ""}stock downloads follow plan rules, not credits.
           </div>
         </div>
       </div>

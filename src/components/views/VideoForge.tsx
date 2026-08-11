@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, Toggle, postJson, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 import { useNav } from "../Console";
@@ -25,6 +26,7 @@ interface Catalog {
 }
 
 export default function VideoForge() {
+  const t = useT();
   const { status } = useNav();
   const toast = useToast();
   const runner = useJobRunner();
@@ -100,15 +102,15 @@ export default function VideoForge() {
 
   const generate = async () => {
     if (!prompt.trim() && mode === "T2V") {
-      toast.push("err", "A prompt is required");
+      toast.push("err", t("A prompt is required"));
       return;
     }
     if (mode === "I2V" && !first) {
-      toast.push("err", "Image → video needs a first frame");
+      toast.push("err", t("Image → video needs a first frame"));
       return;
     }
     if (!status?.tenant.videoEnabled) {
-      toast.push("err", "Video is disabled for this tenant — enable it in Developers");
+      toast.push("err", t("Video is disabled for this tenant — enable it in Developers"));
       return;
     }
     await runner.run(kind, params, { label: prompt.slice(0, 60) || "video", via: viaMcp ? "mcp" : "rest" });
@@ -127,16 +129,16 @@ export default function VideoForge() {
     <>
       <div className="intro">
         <div>
-          <h1>VIDEO FORGE</h1>
+          <h1>{t("VIDEO FORGE")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
             {models.length} models · text / image → video · native audio · motion control
           </div>
         </div>
         <div className="topbar-spacer" />
         <span className={`chip ${status?.tenant.videoEnabled ? "active" : ""}`}>
-          {status?.tenant.videoEnabled ? "VIDEO ENABLED" : "VIDEO DISABLED"}
+          {status?.tenant.videoEnabled ? t("VIDEO ENABLED") : t("VIDEO DISABLED")}
         </span>
-        <span className="chip">GATE · {status?.tenant.approvalThreshold} CR</span>
+        <span className="chip">{t("GATE · {n} CR", { n: status?.tenant.approvalThreshold ?? 0 })}</span>
       </div>
 
       <div className="forge-layout">
@@ -145,7 +147,7 @@ export default function VideoForge() {
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 13 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, color: "var(--accent)" }}>
-                {(chosen?.name ?? "AUTO SELECT").toUpperCase()} · {mode}
+                {(chosen?.name ?? t("AUTO SELECT")).toUpperCase()} · {mode}
               </div>
               <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>
                 {viaMcp ? "MCP video_generate" : mode === "T2V" ? "POST /v1/ai/text-to-video/wan-2-5-t2v-1080p" : "POST /v1/ai/image-to-video/kling-v2-6-pro"}
@@ -153,14 +155,14 @@ export default function VideoForge() {
             </div>
 
             <div>
-              <div className="label">MODE</div>
+              <div className="label">{t("MODE")}</div>
               <Seg options={MODES} value={mode} onChange={setMode} />
             </div>
 
             <div>
-              <div className="label">MODEL · {models.length} AVAILABLE</div>
+              <div className="label">{t("MODEL · {n} AVAILABLE", { n: models.length })}</div>
               <select className="select" value={slug} onChange={(e) => setSlug(e.target.value)}>
-                <option value="auto">auto — the server picks</option>
+                <option value="auto">{t("auto — the server picks")}</option>
                 {models.map((m) => (
                   <option key={m.slug} value={m.slug}>
                     {m.name}
@@ -171,17 +173,17 @@ export default function VideoForge() {
               {chosen?.durations?.length ? <div className="hint">durations: {chosen.durations.join(", ")}</div> : null}
             </div>
 
-            <Field label="PROMPT" rows={3} value={prompt} onChange={setPrompt} placeholder="Slow dolly-in, product rotates on velvet plinth, soft rim light…" />
+            <Field label={t("PROMPT")} rows={3} value={prompt} onChange={setPrompt} placeholder={t("Slow dolly-in, product rotates on velvet plinth, soft rim light…")} />
 
             <div style={{ display: "flex", gap: 8 }}>
               <button className="btn" style={{ flex: 1 }} disabled={planning || !prompt.trim()} onClick={runPlan}>
-                {planning ? "◷ PLANNING…" : "⌁ PLAN · FREE"}
+                {planning ? t("◷ PLANNING…") : t("⌁ PLAN · FREE")}
               </button>
             </div>
             {plan ? (
               <div className="well" style={{ padding: "10px 12px", maxHeight: 180, overflow: "auto" }}>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>
-                  VIDEO PLAN
+                  {t("VIDEO PLAN")}
                 </div>
                 <pre className="json">{plan}</pre>
               </div>
@@ -190,8 +192,8 @@ export default function VideoForge() {
             {mode === "I2V" ? (
               <>
                 <Dropzone
-                  label="⊕ image · first frame"
-                  hint="drop a still — kept locally and staged for the provider"
+                  label={t("⊕ image · first frame")}
+                  hint={t("drop a still — kept locally and staged for the provider")}
                   accept="image/*"
                   value={first}
                   onChange={setFirst}
@@ -199,36 +201,36 @@ export default function VideoForge() {
                   needStaging
                   minHeight={86}
                 />
-                <Dropzone label="⊕ image_end · last frame" hint="optional · enables transition" accept="image/*" value={last} onChange={setLast} minHeight={60} />
+                <Dropzone label={t("⊕ image_end · last frame")} hint={t("optional · enables transition")} accept="image/*" value={last} onChange={setLast} minHeight={60} />
               </>
             ) : null}
 
             <div>
-              <div className="label">RESOLUTION</div>
+              <div className="label">{t("RESOLUTION")}</div>
               <Seg options={RESOLUTIONS} value={resolution} onChange={setResolution} />
             </div>
             <div>
-              <div className="label">DURATION</div>
+              <div className="label">{t("DURATION")}</div>
               <Seg options={DURATIONS} value={duration} onChange={setDuration} />
             </div>
             <div>
-              <div className="label">ASPECT RATIO</div>
+              <div className="label">{t("ASPECT RATIO")}</div>
               <Seg options={ASPECTS} value={aspect} onChange={setAspect} wrap />
             </div>
 
             {!viaMcp ? (
               <>
-                <Toggle on={audio} onChange={setAudio} label="GENERATE AUDIO · native sound" />
-                <Toggle on={cameraFixed} onChange={setCameraFixed} label="CAMERA_FIXED · lock framing" />
-                <Field label="SEED · 0 — 4 294 967 295" value={seed} onChange={setSeed} placeholder="random" />
-                <Field label="WEBHOOK_URL · OPTIONAL" value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
+                <Toggle on={audio} onChange={setAudio} label={t("GENERATE AUDIO · native sound")} />
+                <Toggle on={cameraFixed} onChange={setCameraFixed} label={t("CAMERA_FIXED · lock framing")} />
+                <Field label={t("SEED · 0 — 4 294 967 295")} value={seed} onChange={setSeed} placeholder="random" />
+                <Field label={t("WEBHOOK_URL · OPTIONAL")} value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />
               </>
             ) : null}
 
             <button className="btn primary" style={{ width: "100%", marginTop: "auto" }} disabled={runner.busy} onClick={generate}>
-              {runner.busy ? "◷ RENDERING…" : `▶ GENERATE · ≈ ${est?.credits ?? "?"} CREDITS`}
+              {runner.busy ? t("◷ RENDERING…") : `${t("▶ GENERATE")} · ≈ ${est?.credits ?? "?"} ${t("CREDITS")}`}
             </button>
-            {est?.willNeedApproval ? <div className="hint">Above the gate — approval link will be issued before anything is spent.</div> : null}
+            {est?.willNeedApproval ? <div className="hint">{t("Above the gate — approval link will be issued before anything is spent.")}</div> : null}
           </div>
         </div>
 
@@ -244,30 +246,30 @@ export default function VideoForge() {
               href={runner.job?.assets[0]?.url}
               download
             >
-              ⇩ DOWNLOAD MP4
+              {t("⇩ DOWNLOAD MP4")}
             </a>
             <button className="btn" style={{ flex: 1 }} disabled={!runner.job} onClick={() => runner.cancel()}>
-              ✕ CANCEL
+              {t("✕ CANCEL")}
             </button>
           </div>
           <div className="well" style={{ width: "100%", padding: "10px 12px" }}>
             <div className="eyebrow" style={{ marginBottom: 6 }}>
-              TASK
+              {t("TASK")}
             </div>
             <div className="kv">
-              <span>path</span>
+              <span>{t("path")}</span>
               <b className="truncate">{runner.job?.providerPath ?? (viaMcp ? "mcp:video_generate" : "—")}</b>
             </div>
             <div className="kv">
-              <span>task id</span>
+              <span>{t("task id")}</span>
               <b>{runner.job?.providerTaskId ?? "—"}</b>
             </div>
             <div className="kv">
-              <span>status</span>
-              <b style={{ color: "var(--accent)" }}>{runner.job?.status ?? "idle"}</b>
+              <span>{t("status")}</span>
+              <b style={{ color: "var(--accent)" }}>{runner.job?.status ?? t("idle")}</b>
             </div>
             <div className="kv">
-              <span>reserved</span>
+              <span>{t("reserved")}</span>
               <b>{runner.job?.estimatedCredits ?? est?.credits ?? "—"} credits</b>
             </div>
           </div>
@@ -277,7 +279,7 @@ export default function VideoForge() {
         <div className="panel" style={{ alignSelf: "start" }}>
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Model Families</span>
+            <span className="panel-title">{t("Model Families")}</span>
           </div>
           <div className="panel-body scroll-y" style={{ paddingTop: 8, paddingBottom: 8, maxHeight: 560 }}>
             {families.length ? (
@@ -292,18 +294,18 @@ export default function VideoForge() {
               ))
             ) : (
               <div className="empty-state">
-                <div className="nav-sub">connect MCP to read the video catalogue</div>
+                <div className="nav-sub">{t("connect MCP to read the video catalogue")}</div>
               </div>
             )}
           </div>
-          <div className="panel-foot">Every family: submit → poll → download. Webhooks supported on the REST paths.</div>
+          <div className="panel-foot">{t("Every family: submit → poll → download. Webhooks supported on the REST paths.")}</div>
         </div>
       </div>
 
       <div className="block-section">
         <div className="block-head">
-          <h2>Request</h2>
-          <span className="meta">exactly what X-Forge will send</span>
+          <h2>{t("Request")}</h2>
+          <span className="meta">{t("exactly what X-Forge will send")}</span>
         </div>
         <div className="code-card">{JSON.stringify({ kind, via: viaMcp ? "mcp" : "rest", params: redactBase64(params) }, null, 2)}</div>
       </div>

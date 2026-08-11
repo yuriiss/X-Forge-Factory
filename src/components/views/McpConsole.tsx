@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { postJson, useJson, useToast } from "../ui";
 
@@ -67,6 +68,7 @@ const CLIENTS = [
 ] as const;
 
 export default function McpConsole() {
+  const t = useT();
   const toast = useToast();
   const [client, setClient] = useState<(typeof CLIENTS)[number]["id"]>("claude");
   const [selected, setSelected] = useState<string>("account_balance");
@@ -83,7 +85,7 @@ export default function McpConsole() {
   );
   const tools = useJson<ToolsPayload>("/api/mcp/tools", { intervalMs: 120_000 });
 
-  const tool = useMemo(() => tools.data?.tools.find((t) => t.name === selected) ?? null, [tools.data, selected]);
+  const tool = useMemo(() => tools.data?.tools.find((tl) => tl.name === selected) ?? null, [tools.data, selected]);
 
   useEffect(() => {
     setArgs({});
@@ -95,12 +97,12 @@ export default function McpConsole() {
     try {
       const { url } = await postJson<{ url: string }>("/api/mcp/connect", {});
       window.open(url, "x-forge-mcp", "width=560,height=760");
-      toast.push("info", "Approve the sign-in in the popup, then this panel refreshes");
-      const t = setInterval(() => {
+      toast.push("info", t("Approve the sign-in in the popup, then this panel refreshes"));
+      const timer = setInterval(() => {
         status.reload();
         tools.reload();
       }, 4000);
-      setTimeout(() => clearInterval(t), 120_000);
+      setTimeout(() => clearInterval(timer), 120_000);
     } catch (e) {
       toast.push("err", (e as Error).message);
     }
@@ -112,7 +114,7 @@ export default function McpConsole() {
       const parsed = rawMode ? (JSON.parse(raw || "{}") as Record<string, unknown>) : coerce(args, tool);
       const r = await postJson<CallResult>("/api/mcp/call", { tool: selected, args: parsed, confirm });
       setResult(r);
-      if (r.needsConfirmation) toast.push("info", r.message ?? "Confirm the spend to run this");
+      if (r.needsConfirmation) toast.push("info", r.message ?? t("Confirm the spend to run this"));
       else if (r.isError) toast.push("err", `${selected} reported an error`);
       else toast.push("ok", `${selected} · ${r.ms} ms`);
     } catch (e) {
@@ -132,17 +134,17 @@ export default function McpConsole() {
     <>
       <div className="intro">
         <div>
-          <h1>MCP CONSOLE</h1>
+          <h1>{t("MCP CONSOLE")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            Remote Model Context Protocol server · OAuth 2.1 with PKCE · no API key involved
+            {t("Remote Model Context Protocol server · OAuth 2.1 with PKCE · no API key involved")}
           </div>
         </div>
         <div className="topbar-spacer" />
         <span className={`chip ${status.data?.connected ? "active" : ""}`}>
-          <span className={`dot ${status.data?.connected ? "green" : "red"}`} /> {status.data?.connected ? "CONNECTED" : "OFFLINE"}
+          <span className={`dot ${status.data?.connected ? "green" : "red"}`} /> {status.data?.connected ? t("CONNECTED") : t("OFFLINE")}
         </span>
         <span className="chip">{tools.data?.count ?? 0} TOOLS</span>
-        <span className="chip">STREAMABLE HTTP</span>
+        <span className="chip">{t("STREAMABLE HTTP")}</span>
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: "1.05fr 1fr" }}>
@@ -151,15 +153,15 @@ export default function McpConsole() {
           <div className="panel">
             <div className="panel-head">
               <span className={`dot ${status.data?.connected ? "green" : "red"}`} />
-              <span className="panel-title">Server Endpoint</span>
+              <span className="panel-title">{t("Server Endpoint")}</span>
               <span style={{ flex: 1 }} />
               {status.data?.connected ? (
                 <button className="chip" onClick={() => void postJson("/api/mcp/disconnect", {}).then(() => { status.reload(); tools.reload(); })}>
-                  DISCONNECT
+                  {t("DISCONNECT")}
                 </button>
               ) : (
                 <button className="btn primary" style={{ minHeight: 28 }} onClick={connect}>
-                  ⌁ CONNECT
+                  {t("⌁ CONNECT")}
                 </button>
               )}
             </div>
@@ -168,34 +170,34 @@ export default function McpConsole() {
                 {status.data?.server ?? "https://mcp.magnific.com"}
               </div>
               <div className="kv" style={{ marginTop: 12 }}>
-                <span>transport</span>
+                <span>{t("transport")}</span>
                 <b>{status.data?.protocol ?? "streamable HTTP"}</b>
               </div>
               <div className="kv">
-                <span>server</span>
+                <span>{t("server")}</span>
                 <b>
                   {status.data?.serverInfo?.name ?? "—"} {status.data?.serverInfo?.version ?? ""}
                 </b>
               </div>
               <div className="kv">
-                <span>issuer</span>
+                <span>{t("issuer")}</span>
                 <b className="truncate">{status.data?.issuer ?? "—"}</b>
               </div>
               <div className="kv">
-                <span>scope</span>
+                <span>{t("scope")}</span>
                 <b className="truncate">{status.data?.scope ?? "—"}</b>
               </div>
               <div className="kv">
-                <span>token expires</span>
+                <span>{t("token expires")}</span>
                 <b>{status.data?.expiresAt ? new Date(status.data.expiresAt).toLocaleString() : "—"}</b>
               </div>
               <div className="kv">
-                <span>session</span>
+                <span>{t("session")}</span>
                 <b>{status.data?.sessionId ?? "—"}</b>
               </div>
               {status.data && !status.data.connected ? <div className="error-box" style={{ marginTop: 10 }}>{status.data.reason}</div> : null}
               <div className="eyebrow" style={{ marginTop: 14 }}>
-                DISCOVERY
+                {t("DISCOVERY")}
               </div>
               <div className="code-card" style={{ marginTop: 6 }}>
                 {"/.well-known/oauth-protected-resource\n/.well-known/oauth-authorization-server"}
@@ -207,19 +209,19 @@ export default function McpConsole() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Call a tool</span>
+              <span className="panel-title">{t("Call a tool")}</span>
               <span style={{ flex: 1 }} />
               <button className={`chip ${rawMode ? "active" : ""}`} onClick={() => setRawMode(!rawMode)}>
-                RAW JSON
+                {t("RAW JSON")}
               </button>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <div className="label">TOOL</div>
+                <div className="label">{t("TOOL")}</div>
                 <select className="select" value={selected} onChange={(e) => setSelected(e.target.value)}>
-                  {tools.data?.tools.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      {t.name}
+                  {tools.data?.tools.map((tl) => (
+                    <option key={tl.name} value={tl.name}>
+                      {tl.name}
                     </option>
                   ))}
                 </select>
@@ -228,7 +230,7 @@ export default function McpConsole() {
 
               {rawMode ? (
                 <div>
-                  <div className="label">ARGUMENTS · JSON</div>
+                  <div className="label">{t("ARGUMENTS · JSON")}</div>
                   <div className="field col">
                     <textarea rows={6} value={raw} onChange={(e) => setRaw(e.target.value)} />
                   </div>
@@ -239,7 +241,7 @@ export default function McpConsole() {
                     <div key={name}>
                       <div className="label">
                         {name}
-                        {tool.schema?.required?.includes(name) ? " · REQUIRED" : ""} · {spec.type ?? "any"}
+                        {tool.schema?.required?.includes(name) ? t(" · REQUIRED") : ""} · {spec.type ?? t("any")}
                       </div>
                       {spec.enum?.length ? (
                         <select className="select" value={args[name] ?? ""} onChange={(e) => setArgs((a) => ({ ...a, [name]: e.target.value }))}>
@@ -263,11 +265,11 @@ export default function McpConsole() {
                   ))}
                 </div>
               ) : (
-                <div className="hint">This tool takes no arguments.</div>
+                <div className="hint">{t("This tool takes no arguments.")}</div>
               )}
 
               <button className="btn primary" style={{ width: "100%" }} disabled={busy || !status.data?.connected} onClick={() => call(false)}>
-                {busy ? "◷ CALLING…" : "▷ CALL TOOL"}
+                {busy ? t("◷ CALLING…") : t("▷ CALL TOOL")}
               </button>
 
               {result?.needsConfirmation ? (
@@ -275,7 +277,7 @@ export default function McpConsole() {
                   <b style={{ color: "var(--accent)" }}>{result.message}</b>
                   {result.estimate?.reason ? <div className="dim" style={{ marginTop: 6 }}>{result.estimate.reason}</div> : null}
                   <button className="btn accent" style={{ width: "100%", marginTop: 10 }} onClick={() => call(true)}>
-                    ✓ CONFIRM AND SPEND
+                    {t("✓ CONFIRM AND SPEND")}
                   </button>
                 </div>
               ) : null}
@@ -311,20 +313,20 @@ export default function McpConsole() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Connect another client</span>
+              <span className="panel-title">{t("Connect another client")}</span>
             </div>
             <div className="panel-body">
               <div className="tabs" style={{ marginBottom: 12 }}>
                 {CLIENTS.map((c) => (
                   <button key={c.id} className={`chip ${client === c.id ? "active" : ""}`} onClick={() => setClient(c.id)}>
-                    {c.label}
+                    {t(c.label)}
                   </button>
                 ))}
               </div>
               {CLIENTS.filter((c) => c.id === client).map((c) => (
                 <div key={c.id}>
                   <div className="code-card">{c.body}</div>
-                  <div className="hint">{c.hint}</div>
+                  <div className="hint">{t(c.hint)}</div>
                 </div>
               ))}
             </div>
@@ -335,10 +337,10 @@ export default function McpConsole() {
         <div className="panel" style={{ alignSelf: "start" }}>
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Tool Catalog</span>
+            <span className="panel-title">{t("Tool Catalog")}</span>
             <span style={{ flex: 1 }} />
             <div className="field" style={{ minHeight: 28, width: 150 }}>
-              <input placeholder="⌕ filter" value={filter} onChange={(e) => setFilter(e.target.value)} />
+              <input placeholder={t("⌕ filter")} value={filter} onChange={(e) => setFilter(e.target.value)} />
             </div>
             <button className="chip" onClick={() => tools.reload()}>
               ⟳
@@ -347,8 +349,8 @@ export default function McpConsole() {
           <div className="panel-body scroll-y" style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 1100 }}>
             {!tools.data?.connected ? (
               <div className="empty-state">
-                <div className="empty-title">Not connected</div>
-                <div className="nav-sub">the catalogue is whatever tools/list answers — connect to read it</div>
+                <div className="empty-title">{t("Not connected")}</div>
+                <div className="nav-sub">{t("the catalogue is whatever tools/list answers — connect to read it")}</div>
               </div>
             ) : (
               groups.map((g) =>
@@ -358,11 +360,11 @@ export default function McpConsole() {
                       {g.name}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                      {g.items.map((t) => (
-                        <div className="mcp-tool clickable" key={t.name} onClick={() => setSelected(t.name)}>
-                          <code>{t.name}</code>
-                          <small style={{ flex: 1 }}>{t.description}</small>
-                          <span className={`badge ${t.free ? "green" : "amber"}`}>{t.free ? "FREE" : "CREDITS"}</span>
+                      {g.items.map((item) => (
+                        <div className="mcp-tool clickable" key={item.name} onClick={() => setSelected(item.name)}>
+                          <code>{item.name}</code>
+                          <small style={{ flex: 1 }}>{item.description}</small>
+                          <span className={`badge ${item.free ? "green" : "amber"}`}>{item.free ? t("FREE") : t("CREDITS")}</span>
                         </div>
                       ))}
                     </div>

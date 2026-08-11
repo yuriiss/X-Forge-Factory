@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import Lightbox, { type LightboxAsset } from "./Lightbox";
 import {
   createContext,
@@ -93,10 +94,10 @@ export function useJson<T>(url: string | null, opts: { intervalMs?: number; deps
     if (!opts.intervalMs) return () => {
       alive = false;
     };
-    const t = setInterval(run, opts.intervalMs);
+    const timer = setInterval(run, opts.intervalMs);
     return () => {
       alive = false;
-      clearInterval(t);
+      clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, nonce, opts.intervalMs, ...deps]);
@@ -122,8 +123,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const push = useCallback((kind: Toast["kind"], message: string) => {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, kind, message }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === "err" ? 9000 : 4500);
+    setToasts((list) => [...list, { id, kind, message }]);
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), kind === "err" ? 9000 : 4500);
   }, []);
   const value = useMemo(() => ({ push }), [push]);
 
@@ -131,12 +132,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastCtx.Provider value={value}>
       {children}
       <div className="toast-stack">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast ${t.kind === "err" ? "err" : t.kind === "ok" ? "ok" : ""}`}>
-            <span style={{ color: t.kind === "err" ? "var(--red)" : t.kind === "ok" ? "var(--green)" : "var(--accent)" }}>
-              {t.kind === "err" ? "✕" : t.kind === "ok" ? "✓" : "◆"}
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast ${toast.kind === "err" ? "err" : toast.kind === "ok" ? "ok" : ""}`}>
+            <span style={{ color: toast.kind === "err" ? "var(--red)" : toast.kind === "ok" ? "var(--green)" : "var(--accent)" }}>
+              {toast.kind === "err" ? "✕" : toast.kind === "ok" ? "✓" : "◆"}
             </span>
-            <span style={{ flex: 1 }}>{t.message}</span>
+            <span style={{ flex: 1 }}>{toast.message}</span>
           </div>
         ))}
       </div>
@@ -343,6 +344,7 @@ export function Dropzone({
   needStaging?: boolean;
   minHeight?: number;
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -416,7 +418,7 @@ export function Dropzone({
       {busy ? (
         <>
           <span className="spinner" />
-          <span style={{ fontSize: 10 }}>uploading…</span>
+          <span style={{ fontSize: 10 }}>{t("uploading…")}</span>
         </>
       ) : value ? (
         <>
@@ -512,6 +514,7 @@ export function useJobRunner() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const t = useT();
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const watch = useCallback((jobId: string) => {
@@ -555,7 +558,7 @@ export function useJobRunner() {
           setBusy(false);
           return answer;
         }
-        if (answer.reused) toast.push("info", "Identical request — showing the original job");
+        if (answer.reused) toast.push("info", t("Identical request — showing the original job"));
         watch(answer.jobId);
         return answer;
       } catch (e) {
@@ -565,18 +568,18 @@ export function useJobRunner() {
         return null;
       }
     },
-    [toast, watch],
+    [toast, watch, t],
   );
 
   const cancel = useCallback(async () => {
     if (!job) return;
     try {
       await postJson(`/api/jobs/${job.id}`, { action: "cancel" });
-      toast.push("ok", "Job cancelled");
+      toast.push("ok", t("Job cancelled"));
     } catch (e) {
       toast.push("err", (e as Error).message);
     }
-  }, [job, toast]);
+  }, [job, toast, t]);
 
   return { job, blocked, error, busy, run, cancel, watch, setJob };
 }
@@ -665,6 +668,7 @@ export function JobResult({
   placeholder: string;
   height?: number;
 }) {
+  const t = useT();
   const live = job && LIVE.includes(job.status);
   // A result you cannot inspect at full size is a thumbnail of your own money.
   const [open, setOpen] = useState<number | null>(null);
@@ -675,7 +679,7 @@ export function JobResult({
 
       {blocked ? (
         <div className="notice-box">
-          <b style={{ color: "var(--accent)" }}>Approval required</b> — about {blocked.estimatedCredits ?? "?"} credits.
+          <b style={{ color: "var(--accent)" }}>{t("Approval required")}</b> — about {blocked.estimatedCredits ?? "?"} credits.
           <br />
           <a className="link" href={blocked.approveUrl} target="_blank" rel="noreferrer">
             {blocked.approveUrl}

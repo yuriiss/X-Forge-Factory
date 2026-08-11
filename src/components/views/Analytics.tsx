@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { ago, num, useJson } from "../ui";
 import { badgeFor, shortStatus } from "./Dashboard";
@@ -27,6 +28,7 @@ interface Payload {
 }
 
 export default function Analytics() {
+  const t = useT();
   const [days, setDays] = useState(14);
   const a = useJson<Payload>(`/api/analytics?days=${days}`, { deps: [days], intervalMs: 30_000 });
   const max = Math.max(1, ...(a.data?.daily.map((d) => d.credits) ?? [1]));
@@ -35,9 +37,9 @@ export default function Analytics() {
     <>
       <div className="intro">
         <div>
-          <h1>ANALYTICS</h1>
+          <h1>{t("ANALYTICS")}</h1>
           <div className="subtle" style={{ fontSize: 11, marginTop: 4 }}>
-            Credit consumption from the engine ledger · outcomes · audit trail
+            {t("Credit consumption from the engine ledger · outcomes · audit trail")}
           </div>
         </div>
         <div className="topbar-spacer" />
@@ -52,8 +54,8 @@ export default function Analytics() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Credit Usage</span>
-            <span className="meta">forge_credit_ledger · charged once per job</span>
+            <span className="panel-title">{t("Credit Usage")}</span>
+            <span className="meta">{t("forge_credit_ledger · charged once per job")}</span>
           </div>
           <div className="panel-body">
             {a.data?.daily.length ? (
@@ -76,7 +78,7 @@ export default function Analytics() {
               </div>
             ) : (
               <div className="empty-state" style={{ minHeight: 150 }}>
-                <div className="nav-sub">nothing charged in this window yet</div>
+                <div className="nav-sub">{t("nothing charged in this window yet")}</div>
               </div>
             )}
 
@@ -89,26 +91,26 @@ export default function Analytics() {
               </div>
               <div className="stat">
                 <div className="stat-value">{num(a.data?.totals.generations)}</div>
-                <div className="stat-label">GENERATIONS</div>
+                <div className="stat-label">{t("GENERATIONS")}</div>
               </div>
               <div className="stat">
                 <div className="stat-value" style={{ color: "var(--green)" }}>
                   {num(a.data?.today.credits)}
                 </div>
-                <div className="stat-label">TODAY</div>
+                <div className="stat-label">{t("TODAY")}</div>
               </div>
             </div>
 
             <div className="eyebrow" style={{ marginTop: 16 }}>
-              BY MODEL
+              {t("BY MODEL")}
             </div>
             <table className="tbl" style={{ marginTop: 6 }}>
               <tbody>
                 <tr>
-                  <th>Model</th>
-                  <th>Family</th>
-                  <th>Uses</th>
-                  <th>Credits</th>
+                  <th>{t("Model")}</th>
+                  <th>{t("Family")}</th>
+                  <th>{t("Uses")}</th>
+                  <th>{t("Credits")}</th>
                 </tr>
                 {a.data?.byModel.length ? (
                   a.data.byModel.map((m) => (
@@ -124,7 +126,7 @@ export default function Analytics() {
                 ) : (
                   <tr>
                     <td colSpan={4} className="dim">
-                      nothing charged yet
+                      {t("nothing charged yet")}
                     </td>
                   </tr>
                 )}
@@ -137,7 +139,7 @@ export default function Analytics() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Outcomes</span>
+              <span className="panel-title">{t("Outcomes")}</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {Object.entries(a.data?.outcomes ?? {}).length ? (
@@ -152,19 +154,19 @@ export default function Analytics() {
                     </div>
                   ))
               ) : (
-                <div className="hint">no jobs recorded yet</div>
+                <div className="hint">{t("no jobs recorded yet")}</div>
               )}
             </div>
-            <div className="panel-foot">Every terminal state is counted, including the ones nobody likes to display.</div>
+            <div className="panel-foot">{t("Every terminal state is counted, including the ones nobody likes to display.")}</div>
           </div>
 
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Team analytics</span>
+              <span className="panel-title">{t("Team analytics")}</span>
               <span style={{ flex: 1 }} />
               <span className={`badge ${a.data?.team.available ? "green" : "purple"}`}>
-                {a.data?.team.available ? "AVAILABLE" : "PLAN-GATED"}
+                {a.data?.team.available ? t("AVAILABLE") : t("PLAN-GATED")}
               </span>
             </div>
             <div className="panel-body">
@@ -179,13 +181,13 @@ export default function Analytics() {
                 </div>
               )}
             </div>
-            <div className="panel-foot">100 requests per day across /v1/analytics/* · zero credit cost.</div>
+            <div className="panel-foot">{t("100 requests per day across /v1/analytics/* · zero credit cost.")}</div>
           </div>
 
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Audit trail</span>
+              <span className="panel-title">{t("Audit trail")}</span>
               <span style={{ flex: 1 }} />
               <span className="tag">forge_job_events</span>
             </div>
@@ -201,7 +203,7 @@ export default function Analytics() {
                   <span className="dim">{ago(e.at)}</span>
                 </div>
               ))}
-              {!a.data?.audit.length ? <div className="hint">no events yet</div> : null}
+              {!a.data?.audit.length ? <div className="hint">{t("no events yet")}</div> : null}
             </div>
           </div>
         </div>

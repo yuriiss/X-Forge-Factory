@@ -26,6 +26,34 @@ if (!existsSync(input)) {
   process.exit(1);
 }
 
+/**
+ * The cover, the running head and the footer are the script's own words rather than the
+ * document's, so they need translating too — a Ukrainian guidebook with an English cover
+ * is worse than either language alone. The document decides which set to use by its
+ * filename, which keeps the two builds a single command apart.
+ */
+const lang = /\.uk\.md$/.test(input) ? "uk" : "en";
+const CHROME = {
+  en: {
+    sub: "Operator Guidebook",
+    blurb:
+      "Every screen and every control of the Magnific operator console: what it does, what it costs, what it needs first, and what to do when it refuses.",
+    console: "Console",
+    surfaces: "Surfaces",
+    generated: "Generated",
+    running: "X-FORGE · Operator Guidebook",
+  },
+  uk: {
+    sub: "Керівництво оператора",
+    blurb:
+      "Кожен екран і кожен елемент керування консолі Magnific: що він робить, скільки коштує, що йому потрібно спочатку і що робити, коли він відмовляється.",
+    console: "Консоль",
+    surfaces: "Поверхні",
+    generated: "Складено",
+    running: "X-FORGE · Керівництво оператора",
+  },
+}[lang];
+
 const markdown = readFileSync(input, "utf8");
 const title = (markdown.match(/^#\s+(.+)$/m)?.[1] ?? path.basename(input)).replace(/\s*·\s*/g, " · ");
 
@@ -48,7 +76,7 @@ const withoutTitle = markdown.replace(/^#\s+.+\n+/, "");
 const body = marked.parse(withoutTitle, { renderer, gfm: true, breaks: false });
 
 const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>${title}</title>
+<html lang="${lang}"><head><meta charset="utf-8"><title>${title}</title>
 <style>
   :root {
     --ink:#12161f; --ink-2:#3d4757; --muted:#6b7789; --rule:#dfe4ec; --rule-2:#eef1f6;
@@ -117,15 +145,14 @@ const html = `<!doctype html>
   <section class="cover">
     <div class="mark">◆</div>
     <h1>X-FORGE</h1>
-    <div class="sub">Operator Guidebook</div>
+    <div class="sub">${CHROME.sub}</div>
     <div class="meta">
-      Every screen and every control of the Magnific operator console:
-      what it does, what it costs, what it needs first, and what to do when it refuses.
+      ${CHROME.blurb}
       <br><br>
-      <b>Console</b> http://127.0.0.1:7777 &nbsp;·&nbsp;
-      <b>Surfaces</b> api.magnific.com (REST) + mcp.magnific.com (MCP over OAuth)
+      <b>${CHROME.console}</b> http://127.0.0.1:7777 &nbsp;·&nbsp;
+      <b>${CHROME.surfaces}</b> api.magnific.com (REST) + mcp.magnific.com (MCP over OAuth)
       <br>
-      <b>Generated</b> ${new Date().toISOString().slice(0, 10)}
+      <b>${CHROME.generated}</b> ${new Date().toISOString().slice(0, 10)}
     </div>
   </section>
   ${body}
@@ -143,7 +170,7 @@ await page.pdf({
   printBackground: true,
   margin: { top: "16mm", bottom: "18mm", left: "14mm", right: "14mm" },
   displayHeaderFooter: true,
-  headerTemplate: `<div style="font-size:7pt;color:#98a2b3;width:100%;padding:0 14mm;font-family:sans-serif;">X-FORGE · Operator Guidebook</div>`,
+  headerTemplate: `<div style="font-size:7pt;color:#98a2b3;width:100%;padding:0 14mm;font-family:sans-serif;">${CHROME.running}</div>`,
   footerTemplate: `<div style="font-size:7pt;color:#98a2b3;width:100%;padding:0 14mm;font-family:sans-serif;display:flex;justify-content:space-between;">
       <span>api.magnific.com + MCP</span><span class="pageNumber"></span></div>`,
 });

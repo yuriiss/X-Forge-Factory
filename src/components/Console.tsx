@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { ToastProvider, useJson, num } from "./ui";
+import { LangProvider, LANGS, LANG_LABEL, LANG_NAME, useLang, useT } from "@/lib/i18n";
 import Dashboard from "./views/Dashboard";
 import ImageForge from "./views/ImageForge";
 import VideoForge from "./views/VideoForge";
@@ -124,7 +125,21 @@ const VIEWS: Record<string, () => React.ReactElement> = {
   developers: Developers,
 };
 
+/**
+ * The provider has to sit ABOVE anything that translates, including the shell itself —
+ * a `useT()` called in the same component that renders `<LangProvider>` reads the context
+ * default and silently stays English.
+ */
 export default function Console() {
+  return (
+    <LangProvider>
+      <Shell />
+    </LangProvider>
+  );
+}
+
+function Shell() {
+  const t = useT();
   const [view, setView] = useState("dashboard");
   const { data: status, reload } = useJson<Status>("/api/status", { intervalMs: 15_000 });
 
@@ -149,22 +164,22 @@ export default function Console() {
   const View = VIEWS[view] ?? Dashboard;
 
   return (
-    <ToastProvider>
-      <NavCtx.Provider value={{ view, go, status: status ?? null, reloadStatus: reload }}>
+      <ToastProvider>
+        <NavCtx.Provider value={{ view, go, status: status ?? null, reloadStatus: reload }}>
         <div className="app">
           <aside className="sidebar">
             <div className="brand">
               <div className="brand-mark">◆</div>
               <div>
-                <div className="brand-title">X-FORGE</div>
-                <div className="brand-sub">api.magnific.com + MCP</div>
+                <div className="brand-title">{t("X-FORGE")}</div>
+                <div className="brand-sub">{t("api.magnific.com + MCP")}</div>
               </div>
             </div>
 
             <nav className="nav-scroll" id="nav">
               {SECTIONS.map((s) => (
                 <div key={s.title} style={{ display: "contents" }}>
-                  <div className="nav-section">{s.title}</div>
+                  <div className="nav-section">{t(s.title)}</div>
                   {s.items.map((it) => (
                     <div
                       key={it.id}
@@ -175,8 +190,8 @@ export default function Console() {
                     >
                       <span className="nav-glyph">{it.glyph}</span>
                       <div>
-                        <div className="nav-name">{it.name}</div>
-                        <div className="nav-sub">{it.sub}</div>
+                        <div className="nav-name">{t(it.name)}</div>
+                        <div className="nav-sub">{t(it.sub)}</div>
                       </div>
                       {it.dot ? <span className={`dot ${status?.mcp.connected ? "green" : "red"}`} /> : null}
                     </div>
@@ -190,13 +205,15 @@ export default function Console() {
                 {(status?.tenant.displayName ?? "O").slice(0, 1)}
               </span>
               <div style={{ flex: 1 }}>
-                <div className="nav-name">{status?.tenant.displayName ?? "Operator"}</div>
-                <div className="nav-sub">{status?.balance?.tier ?? "—"} plan</div>
+                <div className="nav-name">{status?.tenant.displayName ?? t("Operator")}</div>
+                <div className="nav-sub">
+                  {status?.balance?.tier ?? "—"} {t("plan")}
+                </div>
               </div>
-              <span className="icon-btn" title="Settings" onClick={() => go("developers")} role="button" tabIndex={0}>
+              <span className="icon-btn" title={t("Settings")} onClick={() => go("developers")} role="button" tabIndex={0}>
                 ⚙
               </span>
-              <span className="icon-btn" title="Queue" onClick={() => go("tasks")} role="button" tabIndex={0}>
+              <span className="icon-btn" title={t("Queue")} onClick={() => go("tasks")} role="button" tabIndex={0}>
                 ◉
               </span>
             </div>
@@ -211,12 +228,73 @@ export default function Console() {
             </div>
           </main>
         </div>
-      </NavCtx.Provider>
-    </ToastProvider>
+        </NavCtx.Provider>
+      </ToastProvider>
+  );
+}
+
+/**
+ * The language picker the prototype drew as `EN ▾`.
+ *
+ * A list rather than a toggle: the chip shows the active language and the menu shows what
+ * else exists, which is the difference between a control you can read and one you have to
+ * click to understand. Each language is named in itself — a person looking for Ukrainian
+ * is not helped by the word "Ukrainian".
+ */
+function LangSwitch() {
+  const { lang, setLang } = useLang();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement | null>(null);
+
+  // Closes on anything that means "I'm done here": a click elsewhere, or Escape.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
+  return (
+    <div className="lang-picker" ref={box}>
+      <button className={`chip ${open ? "active" : ""}`} onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open}>
+        {LANG_LABEL[lang]} <span className={`lang-caret ${open ? "up" : ""}`}>⌄</span>
+      </button>
+
+      {open ? (
+        <div className="lang-menu" role="listbox">
+          {LANGS.map((l) => (
+            <button
+              key={l}
+              className={`lang-option ${l === lang ? "active" : ""}`}
+              role="option"
+              aria-selected={l === lang}
+              onClick={() => {
+                setLang(l);
+                setOpen(false);
+              }}
+            >
+              <span className="lang-code">{LANG_LABEL[l]}</span>
+              <span className="lang-name">{LANG_NAME[l]}</span>
+              <span className="lang-tick">{l === lang ? "✓" : ""}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 function Topbar() {
+  const { t, lang } = useLang();
   const { status, go } = useNav();
   const [now, setNow] = useState<Date | null>(null);
 
@@ -224,40 +302,46 @@ function Topbar() {
   // clock is the one thing guaranteed to mismatch during hydration.
   useEffect(() => {
     setNow(new Date());
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const rest = status?.rest.connected;
   const mcp = status?.mcp.connected;
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  // The date follows the chosen language. Hand-written month tables were fine while the
+  // console spoke one language; `Intl` already knows every other one, and it declines the
+  // Ukrainian months correctly, which a lookup table would not.
+  const date = now
+    ? new Intl.DateTimeFormat(lang, { weekday: "short", month: "short", day: "2-digit" }).format(now)
+    : "";
 
   return (
     <header className="topbar">
       <div className="status-line">
         <span className={`dot ${rest ? "green" : "red"}`} />
-        API <strong style={{ color: rest ? "var(--green-text)" : "var(--red)" }}>{rest ? "connected" : "offline"}</strong>
+        API <strong style={{ color: rest ? "var(--green-text)" : "var(--red)" }}>{rest ? t("connected") : t("offline")}</strong>
       </div>
       <div className="status-line">
         <span className={`dot ${mcp ? "green" : "red"}`} />
-        MCP <strong style={{ color: mcp ? "var(--green-text)" : "var(--red)" }}>{mcp ? "OAuth" : "not connected"}</strong>
+        MCP <strong style={{ color: mcp ? "var(--green-text)" : "var(--red)" }}>{mcp ? "OAuth" : t("not connected")}</strong>
       </div>
       <button className="chip active" onClick={() => go("analytics")}>
-        ◆ {num(status?.balance?.spendable ?? null)} CREDITS
+        ◆ {num(status?.balance?.spendable ?? null)} {t("CREDITS")}
       </button>
       <button className="chip" onClick={() => go("developers")}>
-        KEY · {status?.rest.credential.present ? `…${status.rest.credential.last4}` : "none"}
+        {t("KEY")} · {status?.rest.credential.present ? `…${status.rest.credential.last4}` : t("none")}
       </button>
       <button className="chip" onClick={() => go("developers")}>
-        x-magnific-api-key
+        {t("x-magnific-api-key")}
       </button>
       {status?.tenant.status !== "active" ? <span className="badge red">{status?.tenant.status.toUpperCase()}</span> : null}
       <div className="topbar-spacer" />
-      <a className="icon-btn" title="Magnific docs" href="https://docs.magnific.com" target="_blank" rel="noreferrer">
+      <LangSwitch />
+      <a className="icon-btn" title={t("Magnific docs")} href="https://docs.magnific.com" target="_blank" rel="noreferrer">
         ?
       </a>
-      <button className="icon-btn" title="MCP console" onClick={() => go("mcp")}>
+      <button className="icon-btn" title={t("MCP console")} onClick={() => go("mcp")}>
         ▷
       </button>
       <div className="clock">
@@ -271,9 +355,7 @@ function Topbar() {
             "--:--"
           )}
         </strong>
-        <small suppressHydrationWarning>
-          {now ? `${days[now.getDay()]}, ${months[now.getMonth()]} ${String(now.getDate()).padStart(2, "0")}` : ""}
-        </small>
+        <small suppressHydrationWarning>{date}</small>
       </div>
     </header>
   );
