@@ -3,6 +3,8 @@ import { credentialStatus, getTenant, lastBalance, listJobs, openReservationTota
 import { refreshBalance, shaperState } from "@/lib/server/engine";
 import { isConnected, readAuth } from "@/lib/server/mcp";
 import { verifyKey } from "@/lib/server/magnific";
+import { vaultUsage } from "@/lib/server/vault";
+import { vaultRoot } from "@/lib/server/paths";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +76,9 @@ export async function GET() {
       today,
       openJobs: open,
       shaper: shaperState(ctx),
+      // Where the files actually are. The console has been asked this question by every
+      // operator who found a folder panel and assumed it was local.
+      vault: { root: vaultRoot(), ...vaultUsage(ctx) },
       tenant: {
         id: tenant.id,
         displayName: tenant.display_name,

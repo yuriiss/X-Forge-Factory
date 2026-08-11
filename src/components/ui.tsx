@@ -1,5 +1,6 @@
 "use client";
 
+import Lightbox, { type LightboxAsset } from "./Lightbox";
 import {
   createContext,
   useCallback,
@@ -665,6 +666,8 @@ export function JobResult({
   height?: number;
 }) {
   const live = job && LIVE.includes(job.status);
+  // A result you cannot inspect at full size is a thumbnail of your own money.
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <>
@@ -682,7 +685,12 @@ export function JobResult({
         </div>
       ) : null}
 
-      <div className="result-frame g2" style={{ flex: 1, minHeight: height ?? 260 }}>
+      <div
+        className={`result-frame g2 ${job?.assets.length ? "clickable" : ""}`}
+        style={{ flex: 1, minHeight: height ?? 260 }}
+        title={job?.assets.length ? "Open full size" : undefined}
+        onClick={() => job?.assets.length && setOpen(0)}
+      >
         {job?.assets.length ? (
           <AssetView asset={job.assets[0]} />
         ) : live ? (
@@ -708,8 +716,8 @@ export function JobResult({
 
       {job && job.assets.length > 1 ? (
         <div className="gallery" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(90px,1fr))" }}>
-          {job.assets.slice(1).map((a) => (
-            <div className="thumb" key={a.id}>
+          {job.assets.slice(1).map((a, i) => (
+            <div className="thumb zoomable clickable" key={a.id} onClick={() => setOpen(i + 1)}>
               <div className="thumb-img" style={{ height: 70 }}>
                 <AssetView asset={a} height={70} />
               </div>
@@ -719,8 +727,22 @@ export function JobResult({
       ) : null}
 
       {job?.error ? <div className="error-box">{job.errorCode}: {job.error}</div> : null}
+
+      {open !== null && job?.assets[open] ? (
+        <Lightbox
+          asset={assetToLightbox(job, open)}
+          onClose={() => setOpen(null)}
+          onPrev={open > 0 ? () => setOpen(open - 1) : undefined}
+          onNext={open < job.assets.length - 1 ? () => setOpen(open + 1) : undefined}
+        />
+      ) : null}
     </>
   );
+}
+
+function assetToLightbox(job: JobView, index: number): LightboxAsset {
+  const a = job.assets[index];
+  return { id: a.id, url: a.url, kind: a.kind, mime: a.mime, bytes: a.bytes, label: job.label ?? job.modelId, model: job.modelId };
 }
 
 export function bytes(n: number): string {

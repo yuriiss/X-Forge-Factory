@@ -459,9 +459,46 @@ playable, searchable by label or model.
 
 **ACCOUNT** — the Magnific account's own recent creations, made anywhere. URLs here expire.
 
-Filter by type on the left; folders and spaces come from the MCP session. Click any
-thumbnail to load the **Inspector**, which shows the file, its metadata, and gives you
-download and copy-URL buttons.
+### Where the files actually are
+
+The **LIBRARY** panel on the left shows the path, the file count and the size on disk. By
+default that is `~/.x-forge/vault`; set `FORGE_VAULT_DIR` to put it somewhere you browse —
+an Obsidian vault, a project folder — and X-Forge keeps it tidy for you:
+
+```
+X-FORGE/
+  image/   2026-08-11_editorial-portrait_A1B2C3.jpg
+           2026-08-11_editorial-portrait_A1B2C3.md
+  video/   audio/   3D/   vector/
+```
+
+Each asset gets a markdown note beside it carrying the prompt, the model, the cost, the
+endpoint and the job id in frontmatter, and embedding the file itself — so in Obsidian the
+library is browsable, searchable and linkable rather than a folder of binaries.
+
+**FOLDERS** and **SPACES** below it are marked `REMOTE` because they are: those live in your
+Magnific account, not on this machine.
+
+### Opening things
+
+Click any tile to load the **Inspector** and open the full-size viewer.
+
+| | |
+|---|---|
+| scroll | zoom towards the pointer |
+| drag | pan, once zoomed in |
+| double-click | toggle between fit and 2× |
+| `+` `−` `0` | zoom in, out, fit |
+| `1:1` | actual pixels — the header shows the real dimensions |
+| `←` `→` | previous and next asset without leaving the viewer |
+| `Esc` | close |
+
+**3D models open in a real viewer** — drag to orbit, scroll to dolly. The engine loads only
+when you first select a model, so a gallery of stills never pays for it. GLB files also
+render inline in the Inspector.
+
+Video and audio open with full-size players. The same viewer is behind every result panel in
+the forges, so you can check an upscale at actual pixels the moment it lands.
 
 **Import Asset** is the three-way importer: one drop stores the file locally, stages it for
 the REST endpoints, and imports it as an MCP creation — the same thing every dropzone in the

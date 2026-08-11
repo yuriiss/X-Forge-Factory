@@ -16,6 +16,7 @@
     "docs:pdf": "node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.3.1",
     "next": "16.2.11",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -30,7 +31,7 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "description": "Operator console for Magnific \u2014 REST + MCP, with a job engine that reserves credits, gates spending behind human approval, and never re-runs work that may already have been paid for.",
+  "description": "Operator console for Magnific — REST + MCP, with a job engine that reserves credits, gates spending behind human approval, and never re-runs work that may already have been paid for.",
   "license": "AGPL-3.0-or-later",
   "author": "Yurii S. (https://github.com/yuriiss)",
   "repository": {

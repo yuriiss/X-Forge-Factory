@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Dropzone, ago, bytes, useJson, useToast, type Upload } from "../ui";
+import { useNav } from "../Console";
+import Lightbox, { ModelViewer, type LightboxAsset } from "../Lightbox";
+import { useEffect, useState } from "react";
 
 /**
  * Creations.
@@ -31,6 +33,7 @@ interface VaultItem {
 
 export default function Creations() {
   const toast = useToast();
+  const { status } = useNav();
   const [scope, setScope] = useState<"vault" | "account">("vault");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("all");
   const [page, setPage] = useState(1);
@@ -38,6 +41,7 @@ export default function Creations() {
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<VaultItem | null>(null);
   const [upload, setUpload] = useState<Upload | null>(null);
+  const [viewing, setViewing] = useState<number | null>(null);
 
   const perPage = 24;
   const list = useJson<{ items: VaultItem[]; total: number }>(
@@ -93,10 +97,36 @@ export default function Creations() {
 
           <div className="panel">
             <div className="panel-head">
+              <span className="dot green" />
+              <span className="panel-title">Library</span>
+              <span style={{ flex: 1 }} />
+              <span className="tag">ON DISK</span>
+            </div>
+            <div className="panel-body" style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="code-card" style={{ fontSize: 9.5, whiteSpace: "normal", wordBreak: "break-all" }}>
+                {status?.vault.root ?? "…"}
+              </div>
+              <div className="kv">
+                <span>files</span>
+                <b>{status?.vault.files ?? "—"}</b>
+              </div>
+              <div className="kv">
+                <span>size</span>
+                <b>{status ? bytes(status.vault.bytes) : "—"}</b>
+              </div>
+              <div className="hint" style={{ margin: 0 }}>
+                Sorted into image / video / audio / 3D / vector, named by date and label, with a markdown note beside
+                each file.
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
               <span className="dot accent" />
               <span className="panel-title">Folders</span>
               <span style={{ flex: 1 }} />
-              <span className="tag">MCP</span>
+              <span className="tag">REMOTE</span>
             </div>
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 7, paddingTop: 10 }}>
               {folders.data?.folders.length ? (
@@ -112,7 +142,7 @@ export default function Creations() {
                 <div className="hint">{folders.data?.note ?? "no folders"}</div>
               )}
             </div>
-            <div className="panel-foot">folders_list · create · rename · delete</div>
+            <div className="panel-foot">Folders in your Magnific account, not on this machine — where the provider files its own copies.</div>
           </div>
 
           <div className="panel">
@@ -135,6 +165,7 @@ export default function Creations() {
                 <div className="hint">{spaces.data?.note ?? "no spaces"}</div>
               )}
             </div>
+            <div className="panel-foot">Also remote: the infinite canvases where Flows are built.</div>
           </div>
         </div>
 
@@ -165,8 +196,15 @@ export default function Creations() {
             {list.error ? <div className="error-box">{list.error}</div> : null}
             {list.data?.items.length ? (
               <div className="gallery">
-                {list.data.items.map((c) => (
-                  <div className="thumb" key={c.id} onClick={() => setSelected(c)}>
+                {list.data.items.map((c, i) => (
+                  <div
+                    className={`thumb ${c.url ? "zoomable" : ""}`}
+                    key={c.id}
+                    onClick={() => {
+                      setSelected(c);
+                      if (c.url) setViewing(i);
+                    }}
+                  >
                     <div className="thumb-img g1">
                       {c.url && (c.kind === "image" || c.kind === "vector") ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -176,8 +214,13 @@ export default function Creations() {
                       ) : c.preview ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={c.preview} alt={c.label} />
+                      ) : c.kind === "3d" ? (
+                        <span style={{ display: "grid", placeItems: "center", gap: 4 }}>
+                          <span style={{ fontSize: 22 }}>◈</span>
+                          <span className="badge" style={{ fontSize: 7.5 }}>GLB</span>
+                        </span>
                       ) : (
-                        <span>{c.kind === "audio" ? "♫" : c.kind === "3d" ? "◈" : "✦"}</span>
+                        <span>{c.kind === "audio" ? "♫" : "✦"}</span>
                       )}
                     </div>
                     <div className="thumb-meta">
@@ -231,14 +274,24 @@ export default function Creations() {
             <div className="panel-body">
               {selected ? (
                 <>
-                  <div className="result-frame g1" style={{ height: 150 }}>
+                  <div
+                    className="result-frame g1 clickable"
+                    style={{ height: 190 }}
+                    title="Open full size"
+                    onClick={() => {
+                      const i = list.data?.items.findIndex((x) => x.id === selected.id) ?? -1;
+                      if (i >= 0 && selected.url) setViewing(i);
+                    }}
+                  >
                     {selected.url && (selected.kind === "image" || selected.kind === "vector") ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img className="result-media" src={selected.url} alt={selected.label} />
                     ) : selected.url && selected.kind === "video" ? (
                       <video className="result-media" src={selected.url} controls />
                     ) : selected.url && selected.kind === "audio" ? (
-                      <audio style={{ width: "90%" }} src={selected.url} controls />
+                      <audio style={{ width: "90%" }} src={selected.url} controls onClick={(e) => e.stopPropagation()} />
+                    ) : selected.url && selected.kind === "3d" ? (
+                      <InlineModel url={selected.url} />
                     ) : (
                       <span style={{ fontSize: 26, color: "rgba(232,237,245,0.35)" }}>◈</span>
                     )}
@@ -268,6 +321,17 @@ export default function Creations() {
                     <b>{new Date(selected.created).toLocaleString()}</b>
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    <button
+                      className="btn"
+                      style={{ flex: 1 }}
+                      disabled={!selected.url}
+                      onClick={() => {
+                        const i = list.data?.items.findIndex((x) => x.id === selected.id) ?? -1;
+                        if (i >= 0) setViewing(i);
+                      }}
+                    >
+                      ⤢ OPEN
+                    </button>
                     <a className="btn" style={{ flex: 1 }} href={selected.url} download>
                       ⇩
                     </a>
@@ -311,6 +375,78 @@ export default function Creations() {
           </div>
         </div>
       </div>
+
+      {viewing !== null && list.data?.items[viewing]?.url ? (
+        <Lightbox
+          asset={toLightbox(list.data.items[viewing])}
+          onClose={() => setViewing(null)}
+          onPrev={viewing > 0 ? () => step(-1) : undefined}
+          onNext={viewing < (list.data.items.length - 1) ? () => step(1) : undefined}
+        />
+      ) : null}
     </>
+  );
+
+  /** Walk the gallery from inside the viewer, skipping anything with nothing to show. */
+  function step(by: number) {
+    const items = list.data?.items ?? [];
+    let i = (viewing ?? 0) + by;
+    while (i >= 0 && i < items.length && !items[i].url) i += by;
+    if (i >= 0 && i < items.length) {
+      setViewing(i);
+      setSelected(items[i]);
+    }
+  }
+}
+
+function toLightbox(item: VaultItem): LightboxAsset {
+  return {
+    id: item.id,
+    url: item.url!,
+    kind: item.kind,
+    mime: item.mime,
+    bytes: item.bytes,
+    label: item.label,
+    model: item.model ?? item.tool ?? undefined,
+    created: item.created,
+  };
+}
+
+/**
+ * A model rendered in the inspector.
+ *
+ * The viewer is over a megabyte, so it is fetched only once a model is actually selected —
+ * a gallery of stills should not pay for a 3D engine it never uses.
+ */
+function InlineModel({ url }: { url: string }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void import("@google/model-viewer").then(() => alive && setReady(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!ready)
+    return (
+      <div style={{ display: "grid", placeItems: "center", gap: 8 }}>
+        <span className="spinner" />
+        <span className="dim" style={{ fontSize: 9, letterSpacing: 1.5 }}>
+          LOADING 3D
+        </span>
+      </div>
+    );
+
+  return (
+    <ModelViewer
+      class="model-inline"
+      src={url}
+      camera-controls=""
+      auto-rotate=""
+      shadow-intensity="1"
+      exposure="1.1"
+      interaction-prompt="none"
+    />
   );
 }

@@ -35,6 +35,7 @@ export interface Status {
   today: { credits: number; jobs: number };
   openJobs: number;
   shaper: { tenantRpm: number; tenantLimit: number; globalRpm: number; globalLimit: number; burst: number };
+  vault: { root: string; files: number; bytes: number; byKind: Record<string, { files: number; bytes: number }> };
   tenant: {
     id: string;
     displayName: string;

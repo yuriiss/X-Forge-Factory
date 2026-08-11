@@ -43,6 +43,31 @@ describe("MCP outline parsing", () => {
   it("returns nothing for text that is not an outline, instead of guessing", () => {
     expect(parseOutline("this is prose, not a list", "slug")).toHaveLength(0);
   });
+
+  /**
+   * The bug this pins: `folders_list` nests the containing project under each folder, and
+   * a parser that tolerated one level too many let `parent.name` overwrite the folder's
+   * own `name` — so a folder called "Personal" was shown under the name of the project it
+   * happened to live in.
+   */
+  it("does not let a nested field overwrite the record's own", () => {
+    const rows = parseOutline(
+      [
+        "items[1]:",
+        "  - reference: c46bb63f-ed27-488a-a266-cc59418ce98c",
+        "    name: Personal",
+        "    parent:",
+        "      id: aa351c8a-5c4b-4ba2-b024-9348d87a0984",
+        "      name: workspace",
+        "    backgroundUrl: \"https://example.com/bg.webp\"",
+      ].join("\n"),
+      "reference",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].name).toBe("Personal");
+    expect(rows[0].id).toBeUndefined();
+    expect(rows[0].backgroundUrl).toBe("https://example.com/bg.webp");
+  });
 });
 
 describe("MCP result extraction", () => {

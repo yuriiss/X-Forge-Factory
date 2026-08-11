@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { localCtx, type Ctx } from "./repo";
 import { db } from "./db";
 import { startWorker } from "./engine";
+import { migrateVault } from "./vault";
 import { logger, redact } from "./logger";
 import { MagnificError } from "./magnific";
 
@@ -23,6 +24,9 @@ export function boot(): Ctx {
   const g = globalThis as Record<symbol, unknown>;
   if (!g[BOOTED]) {
     db();
+    // Idempotent: rows already in the library layout are skipped, so this is a no-op on
+    // every boot after the first.
+    migrateVault(ctx);
     g[BOOTED] = true;
   }
   // Started unconditionally: `startWorker` hands over rather than duplicating, which is

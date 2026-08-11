@@ -149,3 +149,55 @@ pre.json {
   margin: 0; font-size: 10px; line-height: 1.6; color: var(--text-3);
   white-space: pre-wrap; word-break: break-word; max-height: 340px; overflow: auto;
 }
+
+/* ── Lightbox ──────────────────────────────────────────────────────────────
+   A viewer, not a preview: the stage takes whatever height is going, and the
+   chrome stays out of the way of the pixels. */
+.lightbox {
+  width: min(1500px, 96vw);
+  height: min(920px, 92vh);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--card);
+  overflow: hidden;
+}
+.lightbox-head, .lightbox-foot {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px; background: var(--card-head);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.lightbox-foot { border-bottom: 0; border-top: 1px solid var(--border); font-size: 10px; }
+.lightbox-stage {
+  flex: 1; min-height: 0;
+  display: grid; place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, #0a0f1b 25%, transparent 25%) -8px 0/16px 16px,
+    linear-gradient(-45deg, #0a0f1b 25%, transparent 25%) -8px 0/16px 16px,
+    linear-gradient(45deg, transparent 75%, #0a0f1b 75%) 0 0/16px 16px,
+    linear-gradient(-45deg, transparent 75%, #0a0f1b 75%) 0 0/16px 16px,
+    #070b14;
+  user-select: none;
+}
+.lightbox-stage img { display: block; }
+
+/* The gallery says a tile can be opened. */
+.thumb.zoomable .thumb-img::after {
+  content: "⤢";
+  position: absolute; right: 6px; top: 6px;
+  width: 20px; height: 20px; border-radius: 5px;
+  display: grid; place-items: center;
+  font-size: 10px; color: var(--text-2);
+  background: rgba(10, 16, 29, .72); border: 1px solid var(--border-2);
+  opacity: 0; transition: opacity .15s;
+}
+.thumb.zoomable:hover .thumb-img::after { opacity: 1; }
+
+/* An inline model needs a floor to sit on and a size to fill. */
+.model-inline {
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at 50% 40%, #16233d 0%, #0a101d 70%);
+}

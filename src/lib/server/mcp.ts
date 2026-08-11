@@ -406,14 +406,21 @@ export function dataOf(r: McpCallResult): unknown {
  * `structuredContent` — so the outline IS the payload.
  *
  * Records open with `- key: value`; their fields sit one level deeper, and a field may be
- * a counted list (`aspectRatios[10]: "1:1","16:9",…`). Anything nested deeper than a
- * record's own fields is skipped on purpose: modelling it would mean inventing structure
- * this console does not render.
+ * a counted list (`aspectRatios[10]: "1:1","16:9",…`).
+ *
+ * Only lines at the record's OWN field depth are read. Anything deeper belongs to a
+ * sub-object and is skipped — a rule that has to be exact rather than approximate:
+ * `folders_list` nests the parent project under each folder, and a tolerance of one level
+ * too many let `parent.name` overwrite the folder's own `name`, so a folder called
+ * "Personal" was displayed under the name of the project containing it.
+ *
+ * The field depth is taken from the first field after the opener rather than assumed,
+ * because the indentation step is the server's choice and not ours.
  */
 export function parseOutline(text: string, idKey: string): Record<string, string | string[]>[] {
   const out: Record<string, string | string[]>[] = [];
   let cur: Record<string, string | string[]> | null = null;
-  let recordIndent = 0;
+  let fieldIndent = -1;
 
   for (const raw of text.split("\n")) {
     if (!raw.trim()) continue;
@@ -424,14 +431,17 @@ export function parseOutline(text: string, idKey: string): Record<string, string
     if (opener) {
       if (cur) out.push(cur);
       cur = { [opener[1]]: unquote(opener[2]) };
-      recordIndent = indent;
+      fieldIndent = -1;
       continue;
     }
     if (!cur) continue;
-    if (indent > recordIndent + 4) continue;
 
     const field = line.match(/^([A-Za-z0-9_]+)(\[\d+\])?:\s*(.*)$/);
     if (!field) continue;
+
+    if (fieldIndent === -1) fieldIndent = indent;
+    else if (indent !== fieldIndent) continue;
+
     const [, key, counted, value] = field;
     if (!value) continue;
     cur[key] = counted ? splitList(value) : unquote(value);

@@ -62,7 +62,7 @@ Nothing in the console is mocked. Every panel is reading something.
 | ✂ | **Edit Suite** | Relight, expand, cutout, reimagine, camera, retouch, vectorise, crop |
 | ⌘ | **Flows** | Published Spaces pipelines, with forms built from each flow's own declared inputs |
 | ≣ | **Task Queue** | Every job in its real state, transition history, cancel and reconcile |
-| ▤ | **Creations** | The local vault and the account's history, labelled, never merged |
+| ▤ | **Creations** | The local library and the account's history, never merged · full-size viewer with zoom, orbit for 3D |
 | ❖ | **Stock** | Images, video, music, sound effects, icons |
 | ⚗ | **Utilities** | Image → prompt, prompt improver, AI classifier |
 | ⌁ | **MCP Console** | Live tool catalogue, schema-driven argument forms, priced calls |
@@ -182,8 +182,10 @@ Last full run: **30 of 30 capabilities working**.
 ## Stack
 
 Next.js 16 · React 19 · TypeScript · Tailwind v4 · `node:sqlite` — no ORM, no external
-database, no build step beyond Next. State lives in one directory (`~/.x-forge` by default):
-a SQLite file and a per-tenant asset vault, both outside the web root.
+database, no build step beyond Next. Engine state lives in `~/.x-forge`; generated assets go
+wherever `FORGE_VAULT_DIR` points — sorted into `image/ video/ audio/ 3D/ vector/`, named by
+date and label, each with a markdown note beside it, so an Obsidian vault is a first-class
+destination rather than a dumping ground.
 
 ```
 src/
