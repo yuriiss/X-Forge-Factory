@@ -874,6 +874,27 @@ export const uk: Record<string, string> = {
   /* Where a call went, shown on a result */
   "mcp tool call": "виклик інструмента MCP",
 
+  /* ── worked examples ──────────────────────────────────────────────────────
+     The prompt a field opens with. It is prose an operator reads and edits, so it is
+     translated — except the stock search seed, which is a query against an
+     English-indexed library and would simply return nothing in Ukrainian. */
+  "Editorial portrait of a glassblower at dusk, molten amber light, shot on 85mm":
+    "Портрет склодува в сутінках у журнальному стилі, розплавлене бурштинове світло, знято на 85 мм",
+  "Minimal line icon of a lighthouse inside a circle": "Мінімалістична лінійна іконка маяка в колі",
+  "A sunlit forest clearing at golden hour": "Осяяна сонцем лісова галявина в золоту годину",
+  "Warm synthwave bed, analog pads, slow 84 BPM, nostalgic night drive":
+    "Тепла synthwave-підкладка, аналогові пади, повільні 84 BPM, ностальгійна нічна поїздка",
+  "Heavy vault door closing with metallic reverb": "Важкі двері сховища зачиняються з металевою реверберацією",
+  "Welcome to X-Forge — the media synthesis console.": "Вітаємо в X-Forge — консолі синтезу медіа.",
+  "cat in space": "кіт у космосі",
+
+  /* Labels with a number in them */
+  "CREDITS · {days}D": "КРЕДИТИ · {days} ДН.",
+  "VOICE · {n} IN CATALOGUE": "ГОЛОС · {n} У КАТАЛОЗІ",
+  "durations: {list}": "тривалості: {list}",
+  "Catalogue read live from images_models_list ({source}).":
+    "Каталог читається наживо з images_models_list ({source}).",
+
   /* Detail-row labels */
   balance: "баланс",
   credits: "кредити",

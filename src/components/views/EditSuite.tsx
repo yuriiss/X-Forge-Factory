@@ -2,7 +2,7 @@
 
 import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
-import { Dropzone, Field, JobResult, Seg, Slider, Toggle, useEstimate, useJobRunner, useToast, type Upload } from "../ui";
+import { Dropzone, Field, JobResult, Seg, Slider, Toggle, useEstimate, useExample, useJobRunner, useToast, type Upload } from "../ui";
 
 /**
  * Edit Suite.
@@ -130,7 +130,7 @@ export default function EditSuite() {
   const runner = useJobRunner();
   const [toolId, setToolId] = useState("relight");
   const [image, setImage] = useState<Upload | null>(null);
-  const [prompt, setPrompt] = useState("A sunlit forest clearing at golden hour");
+  const [prompt, setPrompt] = useExample("A sunlit forest clearing at golden hour");
   const [aspect, setAspect] = useState<(typeof ASPECTS)[number]>("16:9");
   const [lightRef, setLightRef] = useState<Upload | null>(null);
   const [lightStrength, setLightStrength] = useState(100);

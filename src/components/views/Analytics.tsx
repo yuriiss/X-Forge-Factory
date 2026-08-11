@@ -87,7 +87,7 @@ export default function Analytics() {
                 <div className="stat-value" style={{ color: "var(--accent)" }}>
                   {num(a.data?.totals.credits)}
                 </div>
-                <div className="stat-label">CREDITS · {days}D</div>
+                <div className="stat-label">{t("CREDITS · {days}D", { days })}</div>
               </div>
               <div className="stat">
                 <div className="stat-value">{num(a.data?.totals.generations)}</div>

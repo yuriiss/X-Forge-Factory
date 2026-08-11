@@ -158,7 +158,7 @@ export default function TaskQueue() {
           <div className="panel">
             <div className="panel-head">
               <span className="dot accent" />
-              <span className="panel-title">Job {open}</span>
+              <span className="panel-title">{t("Job")} {open}</span>
               <span style={{ flex: 1 }} />
               <span className={`badge ${badgeFor(detail.data.job.status)}`}>{detail.data.job.status}</span>
             </div>

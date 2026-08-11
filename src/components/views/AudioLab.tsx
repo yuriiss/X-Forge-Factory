@@ -2,7 +2,7 @@
 
 import { useT } from "@/lib/i18n";
 import { useMemo, useState } from "react";
-import { Dropzone, Field, JobResult, Seg, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
+import { Dropzone, Field, JobResult, Seg, useEstimate, useExample, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
 /**
  * Audio Lab.
@@ -37,18 +37,18 @@ export default function AudioLab() {
   const isolate = useJobRunner();
   const tts = useJobRunner();
 
-  const [musicPrompt, setMusicPrompt] = useState("Warm synthwave bed, analog pads, slow 84 BPM, nostalgic night drive");
+  const [musicPrompt, setMusicPrompt] = useExample("Warm synthwave bed, analog pads, slow 84 BPM, nostalgic night drive");
   const [musicNegative, setMusicNegative] = useState("");
   const [musicLength, setMusicLength] = useState<(typeof MUSIC_LENGTHS)[number]>(30);
   const [musicSeed, setMusicSeed] = useState("");
 
-  const [sfxPrompt, setSfxPrompt] = useState("Heavy vault door closing with metallic reverb");
+  const [sfxPrompt, setSfxPrompt] = useExample("Heavy vault door closing with metallic reverb");
   const [sfxLength, setSfxLength] = useState<(typeof SFX_LENGTHS)[number]>(5);
 
   const [audioFile, setAudioFile] = useState<Upload | null>(null);
-  const [target, setTarget] = useState("lead vocal");
+  const [target, setTarget] = useExample("lead vocal");
 
-  const [ttsText, setTtsText] = useState("Welcome to X-Forge — the media synthesis console.");
+  const [ttsText, setTtsText] = useExample("Welcome to X-Forge — the media synthesis console.");
   const [voiceId, setVoiceId] = useState("");
   const [voiceQuery, setVoiceQuery] = useState("");
 
@@ -194,7 +194,7 @@ export default function AudioLab() {
             <Field label={t("TEXT")} rows={3} value={ttsText} onChange={setTtsText} />
             <Field label={t("FILTER VOICES")} value={voiceQuery} onChange={setVoiceQuery} placeholder={t("name or language…")} />
             <div>
-              <div className="label">VOICE · {catalog.data?.voices.length ?? 0} IN CATALOGUE</div>
+              <div className="label">{t("VOICE · {n} IN CATALOGUE", { n: catalog.data?.voices.length ?? 0 })}</div>
               <select className="select" value={voiceId} onChange={(e) => setVoiceId(e.target.value)}>
                 <option value="">{t("choose a voice…")}</option>
                 {voices.map((v) => (

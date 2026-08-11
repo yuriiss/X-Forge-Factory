@@ -243,6 +243,29 @@ export function Slider({
   );
 }
 
+/**
+ * A text field that opens with a worked example in it.
+ *
+ * The example is prose and belongs in the reader's language, but the instant somebody
+ * types, the box holds their words and no language switch may touch it. So the seed is
+ * replaced only while the field still contains the seed — which is also what makes this
+ * safe on first paint, where the console renders in English before it has read the stored
+ * choice from the browser.
+ */
+export function useExample(text: string): [string, (v: string) => void] {
+  const t = useT();
+  const example = t(text);
+  const [value, setValue] = useState(example);
+  const seed = useRef(example);
+
+  useEffect(() => {
+    setValue((current) => (current === seed.current ? example : current));
+    seed.current = example;
+  }, [example]);
+
+  return [value, setValue];
+}
+
 export function Field({
   label,
   value,

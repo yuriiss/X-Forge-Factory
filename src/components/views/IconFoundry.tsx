@@ -2,7 +2,7 @@
 
 import { useT } from "@/lib/i18n";
 import { useState } from "react";
-import { Field, JobResult, Seg, useEstimate, useJobRunner, useJson, useToast } from "../ui";
+import { Field, JobResult, Seg, useEstimate, useExample, useJobRunner, useJson, useToast } from "../ui";
 
 /**
  * Icon Foundry.
@@ -28,7 +28,7 @@ export default function IconFoundry() {
   const t = useT();
   const toast = useToast();
   const runner = useJobRunner();
-  const [prompt, setPrompt] = useState("Minimal line icon of a lighthouse inside a circle");
+  const [prompt, setPrompt] = useExample("Minimal line icon of a lighthouse inside a circle");
   const [style, setStyle] = useState<(typeof STYLES)[number]>("line");
   const [query, setQuery] = useState("anchor");
   const [term, setTerm] = useState("anchor");

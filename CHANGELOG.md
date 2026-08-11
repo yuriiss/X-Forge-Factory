@@ -35,8 +35,6 @@ the operator's notes already live.
 
 ### Changed
 
-- **Licence: PolyForm Noncommercial → GNU AGPL-3.0-or-later.** Copyleft that survives being
-  run as a service, rather than a licence that merely asks commercial users not to.
 - The topbar date is formatted by `Intl` in the active language rather than from a table of
   English month names.
 - **Creations** distinguishes what is on this machine from what is not: the local library

@@ -2,7 +2,7 @@
 
 import { useT } from "@/lib/i18n";
 import { useState } from "react";
-import { Dropzone, Field, postJson, useToast, type Upload } from "../ui";
+import { Dropzone, Field, postJson, useExample, useToast, type Upload } from "../ui";
 
 /**
  * Utilities.
@@ -19,7 +19,7 @@ export default function Utilities() {
   const [i2pResult, setI2pResult] = useState("");
   const [i2pBusy, setI2pBusy] = useState(false);
 
-  const [prompt, setPrompt] = useState("cat in space");
+  const [prompt, setPrompt] = useExample("cat in space");
   const [improved, setImproved] = useState("");
   const [improveBusy, setImproveBusy] = useState(false);
 
@@ -213,7 +213,7 @@ export default function Utilities() {
         <div className="panel">
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">Rate &amp; cost</span>
+            <span className="panel-title">{t("Rate & cost")}</span>
           </div>
           <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="kv">

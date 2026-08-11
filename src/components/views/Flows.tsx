@@ -263,7 +263,7 @@ export default function Flows() {
               <button className="btn primary" style={{ width: "100%" }} disabled={!selected || busy} onClick={run}>
                 {busy ? t("◷ STARTING…") : `${t("▷ RUN")}${detail?.cost ? ` · ≈ ${detail.cost} ${t("CREDITS")}` : ""}`}
               </button>
-              <div className="hint">Inputs are keyed by api_key; the UUID is accepted for backward compatibility.</div>
+              <div className="hint">{t("Inputs are keyed by api_key; the UUID is accepted for backward compatibility.")}</div>
             </div>
           </div>
 

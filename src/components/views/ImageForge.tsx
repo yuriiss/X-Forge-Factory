@@ -11,6 +11,7 @@ import {
   Toggle,
   num,
   useEstimate,
+  useExample,
   useJobRunner,
   useJson,
   useToast,
@@ -72,7 +73,7 @@ export default function ImageForge() {
   const [tool, setTool] = useState<(typeof TOOLS)[number]["id"]>("mystic");
   const [tab, setTab] = useState<"output" | "history" | "request">("output");
 
-  const [prompt, setPrompt] = useState("Editorial portrait of a glassblower at dusk, molten amber light, shot on 85mm");
+  const [prompt, setPrompt] = useExample("Editorial portrait of a glassblower at dusk, molten amber light, shot on 85mm");
   const [model, setModel] = useState<(typeof MYSTIC_MODELS)[number]>("realism");
   const [aspect, setAspect] = useState<(typeof ASPECTS)[number]>("square_1_1");
   const [mcpAspect, setMcpAspect] = useState<(typeof MCP_ASPECTS)[number]>("1:1");
@@ -219,8 +220,8 @@ export default function ImageForge() {
                 hint={
                   tool === "mystic" ? (
                     <>
-                      Characters via <span style={{ color: "var(--accent)" }}>{t("@name")}</span> or{" "}
-                      <span style={{ color: "var(--accent)" }}>{t("@name::strength")}</span>.
+                      {t("Characters via")} <span style={{ color: "var(--accent)" }}>@name</span> {t("or")}{" "}
+                      <span style={{ color: "var(--accent)" }}>@name::strength</span>.
                     </>
                   ) : undefined
                 }
@@ -239,7 +240,7 @@ export default function ImageForge() {
                       </option>
                     ))}
                   </select>
-                  <div className="hint">Catalogue read live from images_models_list ({catalog.data?.source ?? "…"}).</div>
+                  <div className="hint">{t("Catalogue read live from images_models_list ({source}).", { source: catalog.data?.source ?? "…" })}</div>
                 </div>
               ) : tool === "mystic" ? (
                 <div>
@@ -345,7 +346,7 @@ export default function ImageForge() {
                         </span>
                       )}
                     </div>
-                    <div className="hint">Train new ones in 3D &amp; Soul — LoRAs apply to the default model only.</div>
+                    <div className="hint">{t("Train new ones in 3D & Soul — LoRAs apply to the default model only.")}</div>
                   </div>
 
                   <Field label={t("WEBHOOK_URL · OPTIONAL")} value={webhook} onChange={setWebhook} placeholder="https://your-server.com/webhook" />

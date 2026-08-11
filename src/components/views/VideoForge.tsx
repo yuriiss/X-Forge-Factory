@@ -170,7 +170,7 @@ export default function VideoForge() {
                   </option>
                 ))}
               </select>
-              {chosen?.durations?.length ? <div className="hint">durations: {chosen.durations.join(", ")}</div> : null}
+              {chosen?.durations?.length ? <div className="hint">{t("durations: {list}", { list: chosen.durations.join(", ") })}</div> : null}
             </div>
 
             <Field label={t("PROMPT")} rows={3} value={prompt} onChange={setPrompt} placeholder={t("Slow dolly-in, product rotates on velvet plinth, soft rim light…")} />
