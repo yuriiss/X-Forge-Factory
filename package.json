@@ -1,0 +1,55 @@
+{
+  "name": "x-forge",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "next build",
+    "start": "node scripts/dev.mjs start",
+    "lint": "tsc --noEmit",
+    "test": "npm --prefix tests run test:unit",
+    "test:unit": "npm --prefix tests run test:unit",
+    "test:api": "npm --prefix tests run test:api",
+    "test:e2e": "npm --prefix tests run test:e2e",
+    "docs": "node scripts/capture-screens.mjs && node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf",
+    "docs:pdf": "node scripts/make-pdf.mjs GUIDEBOOK.md docs/X-Forge-Guidebook.pdf"
+  },
+  "dependencies": {
+    "next": "16.2.11",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "marked": "^18.0.9",
+    "playwright-core": "^1.62.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "description": "Operator console for Magnific \u2014 REST + MCP, with a job engine that reserves credits, gates spending behind human approval, and never re-runs work that may already have been paid for.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "Yurii S. (https://github.com/yuriiss)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuriiss/X-Forge-Factory.git"
+  },
+  "homepage": "https://github.com/yuriiss/X-Forge-Factory",
+  "keywords": [
+    "magnific",
+    "freepik",
+    "mcp",
+    "model-context-protocol",
+    "ai-image",
+    "ai-video",
+    "upscaler",
+    "nextjs",
+    "console"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

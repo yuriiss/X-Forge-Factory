@@ -1,0 +1,17 @@
+{
+  "name": "x-forge-tests",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:api": "vitest run --config vitest.api.config.ts",
+    "test:all": "npm run test:unit && npm run test:api && npm run test:e2e",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "4.1.10",
+    "@playwright/test": "^1.51.0"
+  }
+}

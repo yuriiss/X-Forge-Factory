@@ -1,0 +1,41 @@
+# ── secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.local.backup
+.env*.local
+secrets/
+*.pem
+*.key
+
+# ── build & deps ──────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# ── tests ─────────────────────────────────────────────────────────────────────
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/.vitest/
+
+# ── docs build artifacts ──────────────────────────────────────────────────────
+# The PDF is committed; the intermediate HTML inlines every screenshot and is not.
+docs/*.html
+
+# ── engine state ──────────────────────────────────────────────────────────────
+# The database and asset vault live in FORGE_HOME (~/.x-forge by default), outside
+# the repository. These patterns are here in case someone points FORGE_HOME at it.
+*.db
+*.db-wal
+*.db-shm
+vault/
+
+# ── os / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
