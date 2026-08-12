@@ -174,6 +174,10 @@ video that will take minutes either way.
 
 ## Things the API does not document
 
+Eight of them are below. The full fifteen, with wire formats, the complete
+aspect-ratio table and the error strings verbatim, are in
+[`docs/magnific-api-field-notes.md`](docs/magnific-api-field-notes.md).
+
 Established by running it, and pinned by tests — a tidy-up toward the published reference
 would break them silently.
 
@@ -243,6 +247,7 @@ tests/            unit · api · e2e
 
 | | |
 |---|---|
+| [`docs/magnific-api-field-notes.md`](docs/magnific-api-field-notes.md) | Fifteen undocumented Magnific API behaviours, pinned by tests |
 | [`GUIDEBOOK.md`](GUIDEBOOK.md) | Every screen and control, with screenshots — 22 sections |
 | [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 32 pages |
 | [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) | Те саме українською — 22 розділи |
