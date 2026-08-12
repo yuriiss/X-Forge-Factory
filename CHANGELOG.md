@@ -3,7 +3,10 @@
 All notable changes to X-Forge. Format follows [Keep a Changelog](https://keepachangelog.com/1.1.0/);
 versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.3] — 2026-08-12
+
+A chat that talks to every model on the machine, skills behind a scanner, and a stock
+library that hands over files instead of links.
 
 ### Added
 
@@ -219,5 +222,6 @@ refuses base64; `improve-prompt` requires an undocumented `type`; the MCP list t
 in an indented outline rather than JSON; `simulate_cost` takes different arguments from the
 tool it prices; background removal serves PNG as `application/octet-stream`.
 
+[0.0.3]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.3
 [0.0.2]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.2
 [0.0.1]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.1

@@ -1,6 +1,6 @@
 # X-FORGE · Operator Guidebook
 
-<sub>X-Forge v0.0.2 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
+<sub>X-Forge v0.0.3 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
 
 Everything in this console spends real credits from a real Magnific account. This guide
 covers every screen and every control: what it does, what it costs, what it needs from you
@@ -668,8 +668,28 @@ console does.
 
 ![Stock](docs/images/stock.png)
 
-Five libraries behind one search box: images, videos, music, sound effects, icons. Type,
-press Enter or `SEARCH`.
+Ten libraries behind one search box. Six of them are the one resources endpoint with a
+content-type filter — photos, vectors, illustrations, templates, PSDs, mockups — and the
+other four are their own endpoints: videos, icons, music, sound effects. Type, press Enter
+or `SEARCH`.
+
+The provider's own site also lists 3D models and fonts. Neither is here, because no filter
+this API honours selects them: the answer comes back unfiltered, and a tab that quietly
+shows you photos labelled "fonts" is worse than a tab that is missing.
+
+### Getting the file
+
+`DL` downloads. The file arrives **here** — fetched through the provider's signed URL and
+filed in the vault beside everything X-Forge has made, with the same naming and the same
+markdown note. The caption beside it still links to the item's page at the provider, for
+when you want the licence or the author rather than the file.
+
+Clicking a tile opens it full size; a video plays there. Sound effects play from the list.
+Music plays too, but the first press has to fetch the track — the library returns no preview
+URL, only a download one, so playing a track costs the same call downloading it does. On a
+plan with a hundred a day, that is worth knowing before you audition twenty.
+
+### What it costs
 
 Stock is **not** priced in credits. Below a Business plan you get 100 downloads a day; on
 Business and above it is unlimited. The panels at the bottom document the rules, which

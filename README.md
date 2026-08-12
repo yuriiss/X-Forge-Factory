@@ -5,11 +5,11 @@
 **An operator console for Magnific — every capability on one surface, with an engine that
 treats credits like money.**
 
-[![version](https://img.shields.io/badge/version-0.0.2-e8b64c?style=flat-square)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.0.3-e8b64c?style=flat-square)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-AGPL--3.0-3d4757?style=flat-square)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5-4ade80?style=flat-square)](https://nodejs.org)
 [![next](https://img.shields.io/badge/Next.js-16-0d1322?style=flat-square)](https://nextjs.org)
-[![tests](https://img.shields.io/badge/tests-90%20passing-4ade80?style=flat-square)](#tests)
+[![tests](https://img.shields.io/badge/tests-108%20passing-4ade80?style=flat-square)](#tests)
 [![guidebook](https://img.shields.io/badge/guidebook-31%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
 [![languages](https://img.shields.io/badge/languages-EN%20%C2%B7%20UA-7fd4cb?style=flat-square)](GUIDEBOOK.uk.md)
 
@@ -68,7 +68,7 @@ Nothing in the console is mocked. Every panel is reading something.
 | ⌘ | **Flows** | Published Spaces pipelines, with forms built from each flow's own declared inputs |
 | ≣ | **Task Queue** | Every job in its real state, transition history, cancel and reconcile |
 | ▤ | **Creations** | The local library and the account's history, never merged · full-size viewer with zoom, orbit for 3D |
-| ❖ | **Stock** | Images, video, music, sound effects, icons |
+| ❖ | **Stock** | Ten libraries — photos, vectors, illustrations, templates, PSDs, mockups, video, icons, music, sound effects — downloaded into the vault rather than linked |
 | ⚗ | **Utilities** | Image → prompt, prompt improver, AI classifier |
 | ⌁ | **MCP Console** | Live tool catalogue, schema-driven argument forms, priced calls |
 | ∿ | **Analytics** | The engine's own ledger, outcome mix, audit trail |
@@ -210,7 +210,7 @@ tests/            unit · api · e2e
 | [`GUIDEBOOK.md`](GUIDEBOOK.md) | Every screen and control, with screenshots — 22 sections |
 | [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 31 pages |
 | [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) | Те саме українською — 22 розділи |
-| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 32 сторінки |
+| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 34 сторінки |
 | [`CHANGELOG.md`](CHANGELOG.md) | What shipped, and when |
 | [`.env.example`](.env.example) | Every setting, explained |
 
