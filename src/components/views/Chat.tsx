@@ -33,6 +33,7 @@ interface CliAgent {
   models: string[];
   supports: { resume?: boolean; effort?: boolean; permission?: boolean; systemPrompt?: boolean };
   skillsDir: string | null;
+  dialect: string;
   available: boolean;
   where: string | null;
 }
@@ -81,9 +82,48 @@ interface Turn {
 const EFFORTS = ["", "low", "medium", "high", "xhigh", "max"];
 const PERMISSIONS = ["default", "acceptEdits", "plan", "bypassPermissions"];
 
-const TRANSCRIPT = "x-forge.chat.transcript";
-const SESSIONS = "x-forge.chat.sessions";
+const CHATS = "x-forge.chat.list";
+const ACTIVE = "x-forge.chat.active";
 const skillsKey = (id: string) => `x-forge.skills.${id}`;
+
+/**
+ * A saved conversation.
+ *
+ * `sessions` maps a model id to the id of the CLI transcript that belongs to this
+ * conversation, which is what lets an old chat be reopened and continued rather than merely
+ * read: the browser holds what was said, the CLI holds the real context, and this is the
+ * thread between them.
+ */
+interface Conversation {
+  id: string;
+  title: string;
+  at: number;
+  msgs: Msg[];
+  sessions: Record<string, string>;
+}
+
+interface CliSession {
+  id: string;
+  title: string;
+  at: string;
+  bytes: number;
+}
+
+function loadChats(): Conversation[] {
+  try {
+    return (JSON.parse(window.localStorage.getItem(CHATS) ?? "[]") as Conversation[]).filter((c) => c?.id);
+  } catch {
+    return [];
+  }
+}
+
+/** The first thing the operator said, which is what they will recognise it by later. */
+function titleOf(msgs: Msg[]): string {
+  const first = msgs.find((m) => m.role === "user");
+  const text = first?.blocks.filter((b) => b.kind === "text").map((b) => (b as { text: string }).text).join("") ?? "";
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean ? clean.slice(0, 70) : "untitled";
+}
 
 export default function Chat() {
   const t = useT();
@@ -103,6 +143,10 @@ export default function Chat() {
   const [uploading, setUploading] = useState(false);
   const [running, setRunning] = useState(false);
   const [sessions, setSessions] = useState<Record<string, string>>({});
+  const [chatId, setChatId] = useState<string>("");
+  const [chats, setChats] = useState<Conversation[]>([]);
+  const [tab, setTab] = useState<"chat" | "history" | "sessions">("chat");
+  const [cliSessions, setCliSessions] = useState<CliSession[]>([]);
   const [turn, setTurn] = useState<Turn | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [providerModels, setProviderModels] = useState<{ id: string; label: string }[]>([]);
@@ -115,7 +159,7 @@ export default function Chat() {
   const providers = fleet.data?.providers ?? [];
   const active = choice.provider ? undefined : cli.find((a) => a.id === choice.id);
   const activeProvider = choice.provider ? providers.find((p) => p.id === choice.id) : undefined;
-  const dialect = active?.id === "codex" ? "codex" : active?.id === "grok" ? "grok" : active?.id === "qwen" ? "qwen" : "claude";
+  const dialect = active?.dialect ?? "claude";
   const title = activeProvider?.label ?? active?.label ?? choice.id;
   const sessionId = sessions[choice.id];
 
@@ -125,13 +169,13 @@ export default function Chat() {
   }, [saved.data]);
 
   useEffect(() => {
-    try {
-      const parsed = JSON.parse(window.localStorage.getItem(TRANSCRIPT) ?? "null") as Msg[] | null;
-      setMsgs(parsed ?? []);
-      setSessions(JSON.parse(window.localStorage.getItem(SESSIONS) ?? "{}") as Record<string, string>);
-    } catch {
-      setMsgs([]);
-    }
+    const list = loadChats();
+    setChats(list);
+    const wanted = window.localStorage.getItem(ACTIVE) ?? list[0]?.id ?? "";
+    const open = list.find((c) => c.id === wanted) ?? list[0];
+    setChatId(open?.id ?? `c${Date.now().toString(36)}`);
+    setMsgs(open?.msgs ?? []);
+    setSessions(open?.sessions ?? {});
   }, []);
 
   useEffect(() => {
@@ -142,22 +186,29 @@ export default function Chat() {
     }
   }, [choice.id]);
 
+  // An empty conversation is never saved: a list full of chats nobody said anything in is
+  // worse than no list.
   useEffect(() => {
-    if (!msgs.length) return;
+    if (!chatId || !msgs.length) return;
+    const entry: Conversation = { id: chatId, title: titleOf(msgs), at: Date.now(), msgs: msgs.slice(-200), sessions };
+    const next = [entry, ...loadChats().filter((c) => c.id !== chatId)].slice(0, 40);
+    setChats(next);
     try {
-      window.localStorage.setItem(TRANSCRIPT, JSON.stringify(msgs.slice(-200)));
+      window.localStorage.setItem(CHATS, JSON.stringify(next));
+      window.localStorage.setItem(ACTIVE, chatId);
     } catch {
       /* a full quota should not take the conversation down with it */
     }
-  }, [msgs]);
+  }, [msgs, sessions, chatId]);
 
+  // The CLI's own transcripts, which outlive this browser entirely.
   useEffect(() => {
-    try {
-      window.localStorage.setItem(SESSIONS, JSON.stringify(sessions));
-    } catch {
-      /* the session map is a convenience; the CLI still has its own transcript */
-    }
-  }, [sessions]);
+    if (tab !== "sessions" || choice.provider) return;
+    void fetch(`/api/chat/sessions?agent=${encodeURIComponent(choice.id)}`)
+      .then((r) => r.json() as Promise<{ sessions?: CliSession[] }>)
+      .then((r) => setCliSessions(r.sessions ?? []))
+      .catch(() => setCliSessions([]));
+  }, [tab, choice.id, choice.provider]);
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight, behavior: "smooth" });
@@ -232,6 +283,8 @@ export default function Chat() {
     [toast],
   );
 
+  const streamed = useRef(false);
+
   const apply = useCallback((event: ChatEvent, model: string) => {
     if (event.kind === "session") {
       setSessions((prev) => ({ ...prev, [model]: event.id }));
@@ -263,9 +316,15 @@ export default function Chat() {
       const blocks = [...target.blocks];
 
       if (event.kind === "text") {
+        // Claude streams deltas and then repeats the finished message; Kimi, Codex and Qwen
+        // send only the finished one. Taking both would print every answer twice, so a
+        // final is ignored once anything has been streamed in this turn.
+        if (event.final && streamed.current) return prev;
+        if (!event.final) streamed.current = true;
+
         const tail = blocks[blocks.length - 1];
         if (tail?.kind === "text" && tail.streaming) blocks[blocks.length - 1] = { ...tail, text: tail.text + event.text };
-        else blocks.push({ kind: "text", text: event.text, streaming: true });
+        else blocks.push({ kind: "text", text: event.text, streaming: !event.final });
       } else if (event.kind === "tool") {
         // The chip is opened by the stream and completed by the final message, so a tool
         // arriving with a known id updates rather than duplicates.
@@ -303,6 +362,7 @@ export default function Chat() {
     setRunning(true);
 
     const model = choice.id;
+    streamed.current = false;
     const controller = new AbortController();
     abort.current = controller;
 
@@ -388,15 +448,46 @@ export default function Chat() {
 
   const newChat = () => {
     abort.current?.abort();
+    setChatId(`c${Date.now().toString(36)}`);
     setMsgs([]);
     setSessions({});
     setTurn(null);
+    setTab("chat");
+  };
+
+  const openChat = (c: Conversation) => {
+    abort.current?.abort();
+    setChatId(c.id);
+    setMsgs(c.msgs);
+    setSessions(c.sessions ?? {});
+    setTurn(null);
+    setTab("chat");
     try {
-      window.localStorage.removeItem(TRANSCRIPT);
-      window.localStorage.removeItem(SESSIONS);
+      window.localStorage.setItem(ACTIVE, c.id);
+    } catch {
+      /* the conversation is open either way */
+    }
+  };
+
+  const dropChat = (id: string) => {
+    const next = loadChats().filter((c) => c.id !== id);
+    setChats(next);
+    try {
+      window.localStorage.setItem(CHATS, JSON.stringify(next));
     } catch {
       /* nothing to clean up */
     }
+    if (id === chatId) newChat();
+  };
+
+  /** Continue a transcript the CLI wrote, which may predate this console entirely. */
+  const resumeCli = (session: CliSession) => {
+    abort.current?.abort();
+    setChatId(`c${Date.now().toString(36)}`);
+    setMsgs([{ role: "system", at: Date.now(), blocks: [{ kind: "text", text: t("Resumed {id} — the model has the earlier context, this panel does not.", { id: session.id.slice(0, 8) }) }] }]);
+    setSessions({ [choice.id]: session.id });
+    setTurn(null);
+    setTab("chat");
   };
 
   const push = (view: string, prompt: string, label: string) => {
@@ -424,7 +515,7 @@ export default function Chat() {
       </div>
 
       <div className="chat-layout">
-        <div className="panel" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div className="panel chat-panel" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div className="panel-head">
             <span
               className="avatar"
@@ -439,7 +530,70 @@ export default function Chat() {
             {sessionId ? <span className="tag mono">{sessionId.slice(0, 8)}</span> : null}
           </div>
 
-          <div className="chat-log" ref={log} style={{ minHeight: 360, maxHeight: "calc(100vh - 340px)", overflowY: "auto" }}>
+          <div className="chat-tabs">
+            <button className={`seg-btn ${tab === "chat" ? "active" : ""}`} onClick={() => setTab("chat")}>
+              {t("CHAT")}
+            </button>
+            <button className={`seg-btn ${tab === "history" ? "active" : ""}`} onClick={() => setTab("history")}>
+              {t("HISTORY")} · {chats.length}
+            </button>
+            {!choice.provider ? (
+              <button className={`seg-btn ${tab === "sessions" ? "active" : ""}`} onClick={() => setTab("sessions")}>
+                {t("CLI SESSIONS")}
+              </button>
+            ) : null}
+          </div>
+
+          {tab === "history" ? (
+            <div className="chat-log">
+              <div className="hint" style={{ marginBottom: 6 }}>
+                {t("Conversations held in this browser. The model's own transcript is under CLI SESSIONS.")}
+              </div>
+              {chats.length === 0 ? <div className="hint">{t("Nothing saved yet.")}</div> : null}
+              {chats.map((c) => (
+                <div key={c.id} className={`history-row ${c.id === chatId ? "active" : ""}`}>
+                  <button className="history-open" onClick={() => openChat(c)}>
+                    <b>{c.title}</b>
+                    <span className="dim">
+                      {new Date(c.at).toLocaleString()} · {c.msgs.length} {t("messages")}
+                    </span>
+                  </button>
+                  <button className="icon-btn" title={t("Delete")} onClick={() => dropChat(c.id)}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : tab === "sessions" ? (
+            <div className="chat-log">
+              <div className="hint" style={{ marginBottom: 6 }}>
+                {t("Transcripts {label} wrote on this machine. Opening one continues it — the model keeps the context, this panel starts empty.", { label: title })}
+              </div>
+              {cliSessions.length === 0 ? <div className="hint">{t("No transcripts found for this model.")}</div> : null}
+              {cliSessions.map((session) => (
+                <div key={session.id} className="history-row">
+                  <button className="history-open" onClick={() => resumeCli(session)}>
+                    <b>{session.title}</b>
+                    <span className="dim mono">
+                      {new Date(session.at).toLocaleString()} · {session.id.slice(0, 8)}
+                    </span>
+                  </button>
+                  <button
+                    className="icon-btn"
+                    title={t("Delete")}
+                    onClick={async () => {
+                      if (!window.confirm(t("Delete this transcript from disk?"))) return;
+                      await fetch(`/api/chat/sessions?agent=${encodeURIComponent(choice.id)}&id=${encodeURIComponent(session.id)}`, { method: "DELETE" });
+                      setCliSessions((prev) => prev.filter((x) => x.id !== session.id));
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+          <div className="chat-log" ref={log}>
             {msgs.length === 0 ? (
               <div className="empty-state" style={{ margin: "auto", textAlign: "center" }}>
                 <div className="empty-symbols" style={{ fontSize: 30, color: active?.colour ?? "var(--accent)" }}>
@@ -465,6 +619,7 @@ export default function Chat() {
             )}
             {turn ? <ResultBar turn={turn} /> : null}
           </div>
+          )}
 
           <div className="panel-foot" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {skills.length ? (

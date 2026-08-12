@@ -49,6 +49,8 @@ export default function Lightbox({
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const dragging = useRef<{ x: number; y: number } | null>(null);
+  const scaleRef = useRef(1);
+  const offsetRef = useRef({ x: 0, y: 0 });
 
   const isPicture = asset.kind === "image" || asset.kind === "vector";
   const is3d = asset.kind === "3d";
@@ -56,6 +58,8 @@ export default function Lightbox({
   const reset = useCallback(() => {
     setScale(1);
     setOffset({ x: 0, y: 0 });
+    scaleRef.current = 1;
+    offsetRef.current = { x: 0, y: 0 };
   }, []);
 
   useEffect(() => {
@@ -70,8 +74,8 @@ export default function Lightbox({
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowLeft" && onPrev) onPrev();
       else if (e.key === "ArrowRight" && onNext) onNext();
-      else if (e.key === "+" || e.key === "=") setScale((s) => clamp(s * 1.25));
-      else if (e.key === "-" || e.key === "_") setScale((s) => clamp(s / 1.25));
+      else if (e.key === "+" || e.key === "=") zoomBy(1.25);
+      else if (e.key === "-" || e.key === "_") zoomBy(1 / 1.25);
       else if (e.key === "0") reset();
     };
     window.addEventListener("keydown", onKey);
@@ -82,18 +86,59 @@ export default function Lightbox({
    * Zoom towards the pointer rather than the centre — anchoring at the centre means every
    * zoom is followed by a pan to find the detail you were already looking at.
    */
+  /**
+   * How far the picture may be pushed and still be on screen.
+   *
+   * Anchoring the zoom at the pointer is what makes it feel right going in, and what loses
+   * the picture coming out: the offset that kept a corner under the cursor at 6× is far
+   * outside the frame at 1×. So the offset is bounded by how much of the picture actually
+   * overhangs the viewport, which is zero once it fits — at which point it snaps back to
+   * the middle instead of sitting somewhere off the edge.
+   */
+  const bound = (next: { x: number; y: number }, atScale: number) => {
+    const el = imgRef.current;
+    if (!el) return next;
+    const overhangX = Math.max(0, (el.offsetWidth * atScale - el.parentElement!.clientWidth) / 2);
+    const overhangY = Math.max(0, (el.offsetHeight * atScale - el.parentElement!.clientHeight) / 2);
+    return {
+      x: Math.max(-overhangX, Math.min(overhangX, next.x)),
+      y: Math.max(-overhangY, Math.min(overhangY, next.y)),
+    };
+  };
+
+  /**
+   * Zoom about a point, or about the centre when there is no pointer.
+   *
+   * Both states are computed from the values already in hand and then set, rather than
+   * setting one inside the other's updater: React may run an updater more than once, and a
+   * side effect in there gets applied twice — which is how a zoom-out used to travel twice
+   * as far as it should and take the picture off the screen with it.
+   */
+  const zoomAbout = (factor: number, px = 0, py = 0) => {
+    // Read from refs rather than from the render's closure: a wheel spins faster than React
+    // re-renders, so several handlers run against the same stale scale and the picture ends
+    // up somewhere neither of them intended.
+    const from = scaleRef.current;
+    const next = clamp(from * factor);
+    const k = next / from;
+    const moved = { x: px - (px - offsetRef.current.x) * k, y: py - (py - offsetRef.current.y) * k };
+
+    scaleRef.current = next;
+    setScale(next);
+    // Clamped even when the scale did not change: at the limits the wheel keeps arriving,
+    // and that is exactly when a stale offset would otherwise be left where it was.
+    const bounded = bound(next === from ? offsetRef.current : moved, next);
+    offsetRef.current = bounded;
+    setOffset(bounded);
+  };
+
+  const zoomBy = (factor: number) => zoomAbout(factor);
+
   const onWheel = (e: React.WheelEvent) => {
     if (!isPicture) return;
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const px = e.clientX - rect.left - rect.width / 2;
-    const py = e.clientY - rect.top - rect.height / 2;
-    setScale((prev) => {
-      const next = clamp(prev * (e.deltaY < 0 ? 1.18 : 1 / 1.18));
-      const k = next / prev;
-      setOffset((o) => ({ x: px - (px - o.x) * k, y: py - (py - o.y) * k }));
-      return next;
-    });
+    zoomAbout(e.deltaY < 0 ? 1.18 : 1 / 1.18, e.clientX - rect.left - rect.width / 2, e.clientY - rect.top - rect.height / 2);
   };
 
   const percent = (() => {
@@ -124,13 +169,13 @@ export default function Lightbox({
 
           {isPicture ? (
             <>
-              <button className="icon-btn" title={t("Zoom out  −")} onClick={() => setScale((s) => clamp(s / 1.25))}>
+              <button className="icon-btn" title={t("Zoom out  −")} onClick={() => zoomBy(1 / 1.25)}>
                 −
               </button>
               <button className="chip" style={{ minWidth: 62 }} title={t("Fit  0")} onClick={reset}>
                 {percent !== null ? `${percent}%` : t("FIT")}
               </button>
-              <button className="icon-btn" title={t("Zoom in  +")} onClick={() => setScale((s) => clamp(s * 1.25))}>
+              <button className="icon-btn" title={t("Zoom in  +")} onClick={() => zoomBy(1.25)}>
                 +
               </button>
               <button
@@ -139,7 +184,10 @@ export default function Lightbox({
                 onClick={() => {
                   const el = imgRef.current;
                   if (el && natural) {
-                    setScale(clamp(natural.w / (el.offsetWidth || 1)));
+                    const oneToOne = clamp(natural.w / (el.offsetWidth || 1));
+                    scaleRef.current = oneToOne;
+                    offsetRef.current = { x: 0, y: 0 };
+                    setScale(oneToOne);
                     setOffset({ x: 0, y: 0 });
                   }
                 }}
@@ -160,7 +208,7 @@ export default function Lightbox({
         <div
           className="lightbox-stage"
           onWheel={onWheel}
-          onDoubleClick={() => (scale === 1 ? setScale(2) : reset())}
+          onDoubleClick={() => (scale === 1 ? zoomAbout(2) : reset())}
           onPointerDown={(e) => {
             if (!isPicture || scale <= 1) return;
             dragging.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
@@ -168,7 +216,9 @@ export default function Lightbox({
           }}
           onPointerMove={(e) => {
             if (!dragging.current) return;
-            setOffset({ x: e.clientX - dragging.current.x, y: e.clientY - dragging.current.y });
+            const dragged = bound({ x: e.clientX - dragging.current.x, y: e.clientY - dragging.current.y }, scaleRef.current);
+            offsetRef.current = dragged;
+            setOffset(dragged);
           }}
           onPointerUp={() => {
             dragging.current = null;

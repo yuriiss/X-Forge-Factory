@@ -19,7 +19,7 @@ import { getEnv } from "./envfile";
  * omits it.
  */
 
-export type Dialect = "claude" | "grok" | "codex" | "qwen" | "text";
+export type Dialect = "claude" | "kimi" | "grok" | "codex" | "agy";
 
 export interface AgentDef {
   id: string;
@@ -71,7 +71,7 @@ export const AGENTS: AgentDef[] = [
     glyph: "◐",
     colour: "#5b7cfa",
     kind: "Agentic CLI",
-    dialect: "claude",
+    dialect: "kimi",
     skillsDir: "~/.agents/skills",
     models: [""],
     supports: { resume: true },
@@ -83,7 +83,7 @@ export const AGENTS: AgentDef[] = [
     glyph: "⌘",
     colour: "#a855f7",
     kind: "Agentic CLI",
-    dialect: "qwen",
+    dialect: "claude",
     skillsDir: "~/.agents/skills",
     models: [""],
     supports: {},
@@ -103,13 +103,16 @@ export const AGENTS: AgentDef[] = [
   {
     id: "antigravity",
     label: "Antigravity",
-    bin: "antigravity",
+    // `antigravity` on PATH is the Electron IDE; spawning it opens the whole editor and
+    // streams its startup log into the chat. The headless CLI is `agy`.
+    bin: "agy",
     glyph: "▲",
     colour: "#4c8bf5",
     kind: "Agentic CLI",
-    dialect: "text",
+    dialect: "agy",
+    skillsDir: "~/.agents/skills",
     models: [""],
-    supports: {},
+    supports: { resume: true, effort: true },
   },
 ];
 
@@ -224,6 +227,13 @@ export function buildArgs(def: AgentDef, turn: TurnOptions): string[] {
 
   switch (def.dialect) {
     case "claude": {
+      // Qwen Code shares this envelope but not the flags: it takes `-o`, and neither it nor
+      // Kimi understands the partial-message flags, so those stay on the Claude branch.
+      if (def.id === "qwen") {
+        const args = ["-p", prompt, "-o", "stream-json"];
+        if (turn.model) args.push("-m", turn.model);
+        return args;
+      }
       const args = ["-p", prompt, "--output-format", "stream-json", "--verbose", "--include-partial-messages"];
       if (turn.sessionId) args.push("--resume", turn.sessionId);
       if (turn.model) args.push("--model", turn.model);
@@ -233,16 +243,17 @@ export function buildArgs(def: AgentDef, turn: TurnOptions): string[] {
       }
       return args;
     }
+    case "kimi": {
+      const args = ["-p", prompt, "--output-format", "stream-json"];
+      if (turn.sessionId) args.push("-r", turn.sessionId);
+      if (turn.model) args.push("-m", turn.model);
+      return args;
+    }
     case "grok": {
       const args = ["-p", prompt, "--output-format", "streaming-json"];
       if (turn.sessionId) args.push("--resume", turn.sessionId);
       if (turn.model) args.push("--model", turn.model);
       if (turn.effort && EFFORTS.includes(turn.effort)) args.push("--reasoning-effort", turn.effort);
-      return args;
-    }
-    case "qwen": {
-      const args = ["-p", prompt, "-o", "stream-json"];
-      if (turn.model) args.push("-m", turn.model);
       return args;
     }
     case "codex": {
@@ -251,6 +262,15 @@ export function buildArgs(def: AgentDef, turn: TurnOptions): string[] {
       const args = ["exec", "--json", "--skip-git-repo-check"];
       if (turn.model) args.push("-m", turn.model);
       args.push(prompt);
+      return args;
+    }
+    case "agy": {
+      const args = ["-p", prompt, "--output-format", "stream-json"];
+      if (turn.sessionId) args.push("--conversation", turn.sessionId);
+      if (turn.model) args.push("--model", turn.model);
+      // agy takes only three of the five levels, and passing one it does not know is a
+      // hard error rather than a shrug.
+      if (turn.effort && ["low", "medium", "high"].includes(turn.effort)) args.push("--effort", turn.effort);
       return args;
     }
     default:

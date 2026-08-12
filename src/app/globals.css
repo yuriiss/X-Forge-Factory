@@ -182,7 +182,10 @@ pre.json {
     #070b14;
   user-select: none;
 }
-.lightbox-stage img { display: block; }
+/* `max-height: 100%` on a grid item resolves against the grid area, which is as tall as the
+   picture — so a tall image laid itself out past the stage and "fit" was never fit. Bounding
+   the item itself is what makes 100% mean the box the reader can actually see. */
+.lightbox-stage img { display: block; max-width: 100%; max-height: 100%; min-height: 0; min-width: 0; }
 
 /* The gallery says a tile can be opened. */
 .thumb.zoomable .thumb-img::after {
@@ -324,3 +327,68 @@ textarea.composer::placeholder { color: var(--muted); }
 /* Sits under an answer rather than inside it: the buttons act on the message, they are not
    part of what the model said. */
 .push-row { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 34px; }
+
+/* ── Chat: filling the screen, and being readable on it ────────────────────
+   The view was a panel floating in the middle of a tall window with a band of empty page
+   under it. The panel now takes the height it is given and the log takes what is left
+   inside it, so the composer sits at the bottom of the screen where a composer belongs.
+
+   The type is a step up from the console's default as well. Everywhere else the small text
+   is a label read at a glance; here it is prose somebody reads for a paragraph at a time,
+   and 12px of it was too small to do that with. */
+.chat-layout { align-items: stretch; min-height: calc(100vh - 190px); }
+.chat-panel { height: calc(100vh - 190px); }
+.chat-panel .chat-log { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; gap: 16px; }
+
+.chat-panel .bubble { font-size: 13.5px; line-height: 1.62; padding: 12px 16px; }
+.chat-panel .bubble-line { max-width: 86%; }
+.chat-panel .message-meta { font-size: 10px; }
+.chat-panel .panel-title { font-size: 12px; }
+.chat-panel .tool-chip { font-size: 11px; padding: 6px 10px; }
+.chat-panel .tool-chip .mono { font-size: 10.5px; }
+.chat-panel pre.json { font-size: 11.5px; line-height: 1.55; }
+.chat-panel .push-row .chip,
+.chat-panel .panel-foot .chip { font-size: 10px !important; min-height: 24px; padding: 4px 10px; }
+.chat-panel .panel-foot .hint { font-size: 10.5px; }
+.chat-panel textarea.composer { font-size: 13.5px; min-height: 44px; padding: 12px 14px; }
+.chat-panel .panel-foot .btn { font-size: 11px; min-height: 44px; padding: 0 16px; }
+
+/* The right rail carries numbers that are read at a glance, but its labels were smaller
+   than the console's own minimum. */
+.chat-layout .stat-label { font-size: 9px; }
+.chat-layout .hint { font-size: 10.5px; line-height: 1.6; }
+.chat-layout .label { font-size: 9.5px; }
+
+/* Tabs sit under the model's name because they switch what fills the panel, not what the
+   panel is about. */
+.chat-tabs { display: flex; gap: 6px; padding: 8px 12px 0; }
+.history-row { display: flex; align-items: center; gap: 8px; }
+.history-open {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;
+  padding: 9px 11px; font: inherit; font-size: 12px; text-align: left;
+  color: var(--text-2); background: var(--card); cursor: pointer;
+  border: 1px solid var(--border-2); border-radius: 8px;
+}
+.history-open:hover { border-color: var(--border-strong); }
+.history-row.active .history-open { border-color: var(--accent); }
+.history-open b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-open .dim { font-size: 10px; }
+
+/* A catalogue row is a choice, so the chosen one has to look chosen — Image Forge got away
+   without this because picking a model there also switches the tool above it. */
+.provider-row.clickable:hover { background: var(--row-hover); }
+.provider-row.active { background: var(--row-active); border-color: var(--accent); }
+
+/* A cover is the only picture a music library gives; a sound effect has none, so it gets a
+   glyph rather than an empty square that looks like a failed image. */
+.audio-cover { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; flex: 0 0 auto; }
+.audio-cover.placeholder {
+  display: grid; place-items: center; color: var(--muted);
+  background: var(--well); border: 1px solid var(--border-2);
+}
+
+/* The DL badge became a button when it started downloading rather than linking out; as a
+   <button> it inherits the browser's own chrome unless told otherwise. */
+button.badge { font: inherit; font-size: 8.5px; font-weight: 700; letter-spacing: 1px; cursor: pointer; background: transparent; }
+button.badge:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button.badge:disabled { opacity: .6; cursor: default; }

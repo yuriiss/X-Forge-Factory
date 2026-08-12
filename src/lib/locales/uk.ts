@@ -916,6 +916,47 @@ export const uk: Record<string, string> = {
   "✓ done": "✓ готово",
   "tokens out": "токенів вийшло",
 
+  /* Stock */
+  "The provider's own site also lists 3D models and fonts; neither has a filter this API honours, so neither is shown here rather than shown empty.":
+    "На сайті провайдера є ще 3D-моделі та шрифти; жоден фільтр цього API їх не відбирає, тож тут їх немає — краще так, ніж порожня вкладка.",
+  "Saved to the vault: {name}": "Збережено у сховище: {name}",
+  "Open the item's page at the provider": "Відкрити сторінку матеріалу в провайдера",
+  PHOTOS: "ФОТО",
+  VECTORS: "ВЕКТОР",
+  ILLUSTRATIONS: "ІЛЮСТРАЦІЇ",
+  TEMPLATES: "ШАБЛОНИ",
+  PSD: "PSD",
+  MOCKUPS: "МОКАПИ",
+  VIDEOS: "ВІДЕО",
+  ICONS: "ІКОНКИ",
+
+  /* Stock audio */
+  Play: "Відтворити",
+  "This library gives no preview — the track arrives on download":
+    "Ця бібліотека не дає попереднього прослуховування — трек приходить лише при завантаженні",
+  "Music is listed without a preview: the library returns neither a cover nor a track until it is downloaded.":
+    "Музика показана без прослуховування: бібліотека не віддає ні обкладинку, ні трек, доки його не завантажено.",
+
+  /* Video Forge catalogue */
+  "Let the server pick": "Хай обирає сервер",
+  CLEAR: "ОЧИСТИТИ",
+  "pick one from the catalogue on the right": "оберіть у каталозі праворуч",
+  "Amber = has a REST path, green = MCP only. Every one: submit → poll → download.":
+    "Бурштиновий = має REST-шлях, зелений = лише MCP. Усі однаково: надіслати → опитати → завантажити.",
+
+  /* Chat: history and the CLI's own transcripts */
+  "CLI SESSIONS": "СЕСІЇ CLI",
+  "Conversations held in this browser. The model's own transcript is under CLI SESSIONS.":
+    "Розмови, збережені в цьому браузері. Власна історія моделі — у вкладці СЕСІЇ CLI.",
+  "Nothing saved yet.": "Ще нічого не збережено.",
+  messages: "повідомлень",
+  "Transcripts {label} wrote on this machine. Opening one continues it — the model keeps the context, this panel starts empty.":
+    "Історії, які {label} записав на цій машині. Відкриття продовжує розмову — контекст лишається в моделі, а панель починається порожньою.",
+  "No transcripts found for this model.": "Для цієї моделі історій не знайдено.",
+  "Delete this transcript from disk?": "Видалити цю історію з диска?",
+  "Resumed {id} — the model has the earlier context, this panel does not.":
+    "Відновлено {id} — попередній контекст є в моделі, але не в цій панелі.",
+
   /* Chat: attachments, hand-off, the model chooser */
   "Attach a file": "Прикріпити файл",
   "Enter sends · Shift+Enter starts a new line · paste or attach an image and ask about it":

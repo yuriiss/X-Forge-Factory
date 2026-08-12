@@ -126,15 +126,6 @@ export default function VideoForge() {
     await runner.run(kind, params, { label: prompt.slice(0, 60) || "video", via: viaMcp ? "mcp" : "rest" });
   };
 
-  const families = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const m of models) {
-      const f = m.family ?? "other";
-      map.set(f, [...(map.get(f) ?? []), m.name]);
-    }
-    return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [models]);
-
   return (
     <>
       <div className="intro">
@@ -171,16 +162,22 @@ export default function VideoForge() {
 
             <div>
               <div className="label">{t("MODEL · {n} AVAILABLE", { n: models.length })}</div>
-              <select className="select" value={slug} onChange={(e) => setSlug(e.target.value)}>
-                <option value="auto">{t("auto — the server picks")}</option>
-                {models.map((m) => (
-                  <option key={m.slug} value={m.slug}>
-                    {m.name}
-                    {m.seconds ? ` · ~${m.seconds}s` : ""}
-                  </option>
-                ))}
-              </select>
-              {chosen?.durations?.length ? <div className="hint">{t("durations: {list}", { list: chosen.durations.join(", ") })}</div> : null}
+              <div className="well" style={{ padding: "9px 11px", display: "flex", alignItems: "center", gap: 8 }}>
+                <span className={`dot ${slug === "auto" ? "accent" : "green"}`} />
+                <span style={{ flex: 1, minWidth: 0 }} className="truncate">
+                  {chosen?.name ?? t("auto — the server picks")}
+                </span>
+                {slug !== "auto" ? (
+                  <button className="chip" style={{ minHeight: 20, fontSize: 8 }} onClick={() => setSlug("auto")}>
+                    {t("CLEAR")}
+                  </button>
+                ) : null}
+              </div>
+              <div className="hint">
+                {chosen?.durations?.length
+                  ? t("durations: {list}", { list: chosen.durations.join(", ") })
+                  : t("pick one from the catalogue on the right")}
+              </div>
             </div>
 
             <Field label={t("PROMPT")} rows={3} value={prompt} onChange={setPrompt} placeholder={t("Slow dolly-in, product rotates on velvet plinth, soft rim light…")} />
@@ -285,20 +282,40 @@ export default function VideoForge() {
           </div>
         </div>
 
-        {/* Right */}
+        {/* Right — the catalogue, listed rather than folded into a dropdown, so it reads the
+            same way it does in Image Forge and a model can be found by eye. */}
         <div className="panel" style={{ alignSelf: "start" }}>
           <div className="panel-head">
             <span className="dot accent" />
-            <span className="panel-title">{t("Model Families")}</span>
+            <span className="panel-title">{t("Model Catalog")}</span>
+            <span style={{ flex: 1 }} />
+            <span className="chip" style={{ minHeight: 22, fontSize: 8.5 }}>
+              {models.length}
+            </span>
           </div>
-          <div className="panel-body scroll-y" style={{ paddingTop: 8, paddingBottom: 8, maxHeight: 560 }}>
-            {families.length ? (
-              families.map(([family, names]) => (
-                <div className="provider-row" key={family}>
-                  <span className="dot green" />
-                  <span style={{ flex: 1 }}>
-                    <b>{family}</b> · {names.length} model{names.length > 1 ? "s" : ""}
-                    <div className="nav-sub truncate">{names.slice(0, 3).join(" · ")}</div>
+          <div className="panel-body scroll-y" style={{ paddingTop: 8, paddingBottom: 8, maxHeight: 620, display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Distinct from the catalogue's own model called "Auto": this row is the
+                absence of a choice, not a model. */}
+            <div className={`provider-row clickable ${slug === "auto" ? "active" : ""}`} onClick={() => setSlug("auto")}>
+              <span className="dot accent" />
+              <span style={{ flex: 1 }} className="truncate">
+                {t("Let the server pick")}
+              </span>
+            </div>
+            {models.length ? (
+              models.map((m) => (
+                <div
+                  className={`provider-row clickable ${slug === m.slug ? "active" : ""}`}
+                  key={m.slug}
+                  onClick={() => setSlug(m.slug)}
+                  title={m.family ?? ""}
+                >
+                  <span className={`dot ${m.rest ? "accent" : "green"}`} />
+                  <span style={{ flex: 1 }} className="truncate">
+                    {m.name}
+                  </span>
+                  <span className="dim" style={{ fontSize: 9 }}>
+                    {m.seconds ? `~${m.seconds}s` : m.rest ? "REST" : m.family ?? "mcp"}
                   </span>
                 </div>
               ))
@@ -308,7 +325,7 @@ export default function VideoForge() {
               </div>
             )}
           </div>
-          <div className="panel-foot">{t("Every family: submit → poll → download. Webhooks supported on the REST paths.")}</div>
+          <div className="panel-foot">{t("Amber = has a REST path, green = MCP only. Every one: submit → poll → download.")}</div>
         </div>
       </div>
 

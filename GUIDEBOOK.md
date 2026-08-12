@@ -216,7 +216,15 @@ conversation that started elsewhere is handed a short recap of what was said, wh
 makes one chat behave like one chat.
 
 The detection is a lookup, not a setting. Install a CLI in another terminal and the list
-notices within half a minute.
+notices within half a minute. Note that Antigravity is reached through its `agy` command
+rather than the `antigravity` on your PATH — that one is the Electron editor, and running it
+opens the whole IDE.
+
+Each CLI speaks its own dialect: Claude and Qwen Code share an envelope, Kimi emits bare
+messages, Grok calls its deltas `data`, Codex emits completed items, agy nests everything
+under a step update. X-Forge reads each one separately and drops anything it does not
+recognise, because a console that guesses at an unfamiliar line prints something the model
+never said.
 
 ### A turn
 
@@ -232,9 +240,24 @@ its own account's money on output that goes nowhere.
 | Control | What it does |
 |---|---|
 | Model | Passed straight through as the CLI's `--model`. Empty means the CLI's own default |
+
 | Effort | Reasoning budget, where the CLI has the flag |
 | Permissions | What the model may do to files without asking. These are agentic CLIs — they can edit |
 | Working directory | Where the CLI runs. Defaults to your home directory |
+
+### History, and the model's own transcripts
+
+Three tabs sit under the model's name.
+
+**CHAT** is the conversation you are in. **HISTORY** lists the conversations this browser
+has kept — click one to reopen it, including the CLI session ids that belong to it, so it
+continues rather than merely being readable. **CLI SESSIONS** lists what the model itself
+wrote on this machine: `~/.claude/projects`, `~/.grok/sessions`, `~/.codex/sessions` and so
+on, transcripts that predate this console and outlive it. Opening one continues it — the
+model keeps the context, this panel starts empty, and it says so.
+
+Deleting in HISTORY forgets a conversation in this browser. Deleting under CLI SESSIONS
+removes the transcript from disk, which is the CLI's own record.
 
 ### Files
 
@@ -374,6 +397,10 @@ screen is built around knowing the price first.
    wire format the endpoint wants.
 7. Toggles: native audio, locked framing, a seed for repeatability.
 8. **GENERATE**. Anything over your threshold produces an approval link instead of running.
+
+Models are chosen from a **Model Catalog** list on the right, exactly like Image Forge's.
+**Let the server pick** sits at the top and leaves the choice to `auto`; clicking any other
+row selects that model.
 
 The **TASK** panel underneath shows the endpoint, the provider task id, the live status and
 what was reserved. The **Request** block at the bottom of the page is the exact payload.

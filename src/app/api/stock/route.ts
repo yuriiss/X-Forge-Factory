@@ -33,12 +33,13 @@ export async function GET(req: Request) {
 
     if (type === "videos") {
       const j = (await searchStockVideos(ctx, { term, limit: String(limit), page: String(page) })) as { data?: Record<string, unknown>[] };
-      return {
+        return {
         type,
         items: (j.data ?? []).map((v) => ({
           id: String(v.id),
           title: String(v.name ?? v.title ?? "clip"),
-          preview: pick(v, ["thumbnail", "preview", "image"]),
+          preview: pick(v, ["thumbnails", "thumbnail", "image"]),
+          clip: pick(v, ["previews"]),
           meta: String(v.resolution ?? v.duration ?? "video"),
           url: String(v.url ?? ""),
         })),
@@ -58,14 +59,24 @@ export async function GET(req: Request) {
           id: String(m.id),
           title: String(m.title ?? "track"),
           meta: String(m.time ?? (m.duration ? `${m.duration}s` : "")),
+          // The music library returns a `cover_url` on a bucket that answers 403 to
+          // everyone, so mapping it only produces a broken-image icon. Sound effects are
+          // the ones with a real file, and that one plays.
           preview: null,
-          url: String(m.preview ?? m.url ?? ""),
+          clip: pick(m, ["file_url", "preview_url", "preview"]),
+          url: String(m.file_url ?? m.preview ?? m.url ?? ""),
           tags: (m.genres as { name?: string }[] | undefined)?.map((g) => g.name).filter(Boolean) ?? [],
         })),
       };
     }
 
-    const j = (await searchStock(ctx, { term, limit: String(limit), page: String(page) })) as { data?: Record<string, unknown>[] };
+    const content = q(req, "content");
+    const j = (await searchStock(ctx, {
+      term,
+      limit: String(limit),
+      page: String(page),
+      ...(content ? { [`filters[content_type][${content}]`]: "1" } : {}),
+    })) as { data?: Record<string, unknown>[] };
     return {
       type: "images",
       items: (j.data ?? []).map((r) => ({
@@ -79,20 +90,51 @@ export async function GET(req: Request) {
   });
 }
 
+/**
+ * The first usable image URL under any of `keys`.
+ *
+ * Each library buries it differently — a resource has `image.source.url`, a video has an
+ * array of `thumbnails` sorted small to large, an icon has a plain string — so this walks
+ * one object or array deep rather than assuming a shape. It used to stop at the first
+ * object and return null, which is why every photo tile was blank while the icons worked.
+ */
 function pick(o: Record<string, unknown>, keys: string[]): string | null {
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === "string" && v.startsWith("http")) return v;
-    if (v && typeof v === "object") {
-      const nested = (v as Record<string, unknown>).source ?? (v as Record<string, unknown>).url;
-      if (typeof nested === "string" && nested.startsWith("http")) return nested;
-      if (Array.isArray(v) && typeof v[0] === "object") {
-        const first = (v[0] as Record<string, unknown>).url;
-        if (typeof first === "string") return first;
-      }
+  for (const key of keys) {
+    const found = urlIn(o[key], 0);
+    if (found) return found;
+  }
+  return null;
+}
+
+function urlIn(value: unknown, depth: number): string | null {
+  if (depth > 3) return null;
+  if (typeof value === "string") return value.startsWith("http") ? https(value) : null;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = urlIn(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const field of ["url", "source", "src", "thumbnail", "large", "small"]) {
+      const found = urlIn(record[field], depth + 1);
+      if (found) return found;
     }
   }
   return null;
+}
+
+/**
+ * Provider thumbnails come back as `http://` on some libraries. The console is local so a
+ * browser loads them either way, but an operator who puts it behind TLS would see every
+ * tile blocked as mixed content, and these hosts all answer on https.
+ */
+function https(url: string): string {
+  return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
 }
 
 function describeResource(r: Record<string, unknown>): string {

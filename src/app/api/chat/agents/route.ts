@@ -23,6 +23,7 @@ export async function GET() {
     colour: a.colour,
     models: a.models ?? [],
     supports: a.supports,
+    dialect: a.dialect,
     skillsDir: a.skillsDir ?? null,
     available: a.available,
     where: a.where,

@@ -82,10 +82,11 @@ test("the dashboard shows a real balance and the live catalogue reaches the pick
   const models = page.locator(".panel:has(.panel-title:has-text('Model Catalog')) .provider-row");
   await expect.poll(() => models.count(), { timeout: 20_000 }).toBeGreaterThan(20);
 
-  // Video Forge's model select carries the video catalogue.
+  // Video Forge lists the video catalogue the same way, which is the point of it being a
+  // list rather than a dropdown: the two screens read alike.
   await page.locator('.nav-item:has-text("Video Forge")').click();
-  const options = page.locator("select").first().locator("option");
-  await expect.poll(() => options.count(), { timeout: 20_000 }).toBeGreaterThan(20);
+  const videoModels = page.locator(".panel:has(.panel-title:has-text('Model Catalog')) .provider-row");
+  await expect.poll(() => videoModels.count(), { timeout: 20_000 }).toBeGreaterThan(20);
 });
 
 test("the MCP console lists live tools and calls a free one", async ({ page }) => {

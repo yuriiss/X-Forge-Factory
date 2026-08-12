@@ -47,6 +47,43 @@ versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
 - **`🔍 PREVIEW`** downloads a registry skill into quarantine and shows its text and its
   verdict without installing it.
 
+- **Every model actually answers.** Five of the six CLIs failed on their first turn: Kimi
+  rejects Claude's `--verbose`, Grok streams its deltas under `data`, Codex emits completed
+  items, Qwen sends whole messages instead of deltas, and `antigravity` on PATH is the
+  Electron IDE rather than a CLI — spawning it opened the editor and streamed its startup
+  log into the chat. Each now has its own flags and its own reader, `agy` is used for
+  Antigravity, and twenty tests pin the shapes to what the CLIs really print.
+- **Conversations and CLI transcripts.** Three tabs: the chat, the conversations this
+  browser holds, and the transcripts the model itself wrote on this machine — Claude, Kimi,
+  Qwen, Codex, Grok and agy each in their own store. Opening one continues it.
+- The chat fills the height it is given rather than floating above an empty page, and its
+  type is a step larger: everywhere else the small text is a label read at a glance, here it
+  is prose read a paragraph at a time.
+- **Video Forge lists its catalogue** on the right, exactly as Image Forge does, instead of
+  folding fifty-two models into a dropdown.
+- **Stock downloads land in the vault.** The download button fetches the file through the
+  provider's signed URL and files it in the library with a note, rather than opening the
+  provider's website — photos, vectors, PSDs, templates, mockups, videos, icons, music and
+  sound effects alike.
+- **Ten stock libraries instead of five.** The resources endpoint takes a content-type
+  filter, so photos, vectors, illustrations, templates, PSDs and mockups are each their own
+  tab. 3D models and fonts are deliberately absent: no filter changes the answer for them,
+  and a tab that lies is worse than one that is missing.
+- Clicking a stock tile opens it full size, and a video plays there.
+
+### Fixed
+
+- **The viewer lost the picture on zoom out.** Two faults: the offset was never bounded, so
+  an anchor that made sense at 6× put the image off screen at 1×; and the offset was being
+  set inside the scale updater, which React may run twice, applying the move twice. Zoom now
+  bounds against how much of the picture actually overhangs the frame, and returns it to the
+  centre once it fits.
+- A tall image laid itself out past the stage, so "fit" was never a fit: `max-height: 100%`
+  on a grid item resolves against the grid area, which was as tall as the picture.
+- Stock thumbnails were blank because the URL extractor stopped at the first object, and a
+  resource keeps its thumbnail at `image.source.url`. Music covers are gone rather than
+  broken — that bucket answers 403 to everyone.
+
 ### Notes
 
 The scan is static: it reads files and matches patterns, and never executes anything. It
