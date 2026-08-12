@@ -53,6 +53,9 @@ export default function Stock() {
   const [tab, setTab] = useState<TabId>("images");
   const toast = useToast();
   const [playing, setPlaying] = useState<string | null>(null);
+  /** Resolved playable URLs, so pressing play twice costs one call rather than two. */
+  const [tracks, setTracks] = useState<Record<string, string>>({});
+  const [resolving, setResolving] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [viewing, setViewing] = useState<number | null>(null);
 
@@ -64,6 +67,33 @@ export default function Stock() {
    * same name, note and gallery entry. Below a Business plan it spends one of the hundred
    * daily downloads rather than any credits.
    */
+  /**
+   * Play a track.
+   *
+   * A sound effect already carries its file; a music track only exists behind the download
+   * endpoint, so the first press fetches the URL and every press after that reuses it.
+   */
+  const play = async (item: Item) => {
+    if (playing === item.id) {
+      setPlaying(null);
+      return;
+    }
+    let url = item.clip ?? tracks[item.id];
+    if (!url) {
+      setResolving(item.id);
+      try {
+        url = (await postJson<{ url: string }>("/api/stock/resolve", { type: current.type, id: item.id })).url;
+        setTracks((prev) => ({ ...prev, [item.id]: url as string }));
+      } catch (e) {
+        toast.push("err", (e as Error).message);
+        return;
+      } finally {
+        setResolving(null);
+      }
+    }
+    setPlaying(item.id);
+  };
+
   const save = async (item: Item) => {
     setSaving(item.id);
     try {
@@ -164,17 +194,17 @@ export default function Stock() {
                   )}
                   <button
                     className="icon-btn"
-                    style={{ width: 28, height: 28, color: i.clip ? "var(--accent)" : "var(--dim)" }}
-                    disabled={!i.clip}
-                    title={i.clip ? t("Play") : t("This library gives no preview — the track arrives on download")}
-                    onClick={() => setPlaying(playing === i.id ? null : i.id)}
+                    style={{ width: 28, height: 28, color: "var(--accent)" }}
+                    disabled={resolving === i.id}
+                    title={i.clip ? t("Play") : t("Play — fetches the track, which counts as a download")}
+                    onClick={() => void play(i)}
                   >
-                    {playing === i.id ? "◼" : "▶"}
+                    {resolving === i.id ? "◷" : playing === i.id ? "◼" : "▶"}
                   </button>
                   <span style={{ flex: 1, minWidth: 0 }} className="truncate">
                     {i.title}
                   </span>
-                  {playing === i.id && i.clip ? <audio src={i.clip} autoPlay onEnded={() => setPlaying(null)} /> : null}
+                  {playing === i.id ? <audio src={i.clip ?? tracks[i.id]} autoPlay onEnded={() => setPlaying(null)} /> : null}
                   {i.tags?.slice(0, 2).map((tag) => (
                     <span className="tag" key={tag}>
                       {tag}
@@ -232,7 +262,9 @@ export default function Stock() {
         <div className="panel-foot">
           {res.data?.total ? `${res.data.total.toLocaleString()} ${t("results")} · ` : ""}
           {t("Every unique download must be reported; caching is allowed while the plan is active.")}
-          {current.type === "music" ? ` ${t("Music is listed without a preview: the library returns neither a cover nor a track until it is downloaded.")}` : ""}
+          {current.type === "music"
+            ? ` ${t("A music track only exists behind the download endpoint, so pressing play fetches it — one call, counted the same way a download is.")}`
+            : ""}
         </div>
       </div>
 

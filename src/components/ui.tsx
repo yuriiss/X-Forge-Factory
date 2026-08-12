@@ -145,6 +145,132 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/* ------------------------------------------------------------------ ask -- */
+
+/**
+ * Asking the operator something, in the console's own dress.
+ *
+ * `window.confirm` and `window.prompt` work, and they arrive wearing the browser's
+ * chrome — a white box in the middle of a dark console, with the origin printed above the
+ * question. For a panel that spends money and deletes files off disk, that jarring is the
+ * least of it: those dialogs also block the whole page and cannot say which model, which
+ * skill, or what the consequence is in the language the console is speaking.
+ *
+ * One promise-returning hook, so a caller reads the same way it did before:
+ * `if (!(await ask.confirm({ ... }))) return;`
+ */
+export interface ConfirmRequest {
+  title: string;
+  body?: string;
+  confirmLabel?: string;
+  /** Marks the action as one that destroys something. */
+  danger?: boolean;
+}
+
+export interface PromptRequest {
+  title: string;
+  body?: string;
+  placeholder?: string;
+  confirmLabel?: string;
+}
+
+interface Ask {
+  confirm: (request: ConfirmRequest) => Promise<boolean>;
+  prompt: (request: PromptRequest) => Promise<string | null>;
+}
+
+const AskCtx = createContext<Ask>({
+  confirm: async () => false,
+  prompt: async () => null,
+});
+
+export function useAsk(): Ask {
+  return useContext(AskCtx);
+}
+
+type Pending =
+  | { kind: "confirm"; request: ConfirmRequest; resolve: (answer: boolean) => void }
+  | { kind: "prompt"; request: PromptRequest; resolve: (answer: string | null) => void };
+
+export function AskProvider({ children }: { children: ReactNode }) {
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [draft, setDraft] = useState("");
+
+  const confirm = useCallback(
+    (request: ConfirmRequest) => new Promise<boolean>((resolve) => setPending({ kind: "confirm", request, resolve })),
+    [],
+  );
+  const prompt = useCallback((request: PromptRequest) => {
+    setDraft("");
+    return new Promise<string | null>((resolve) => setPending({ kind: "prompt", request, resolve }));
+  }, []);
+
+  const value = useMemo(() => ({ confirm, prompt }), [confirm, prompt]);
+
+  const close = (answer: boolean | string | null) => {
+    if (!pending) return;
+    if (pending.kind === "confirm") pending.resolve(answer === true);
+    else pending.resolve(typeof answer === "string" ? answer : null);
+    setPending(null);
+  };
+
+  // Escape means no, whichever question was asked — the same as walking away from it.
+  useEffect(() => {
+    if (!pending) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close(null);
+      if (e.key === "Enter" && pending.kind === "confirm") close(true);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
+
+  return (
+    <AskCtx.Provider value={value}>
+      {children}
+      {pending ? (
+        <div className="ask-backdrop" onMouseDown={() => close(null)}>
+          <div className="ask" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="panel-head">
+              <span className={`dot ${pending.kind === "confirm" && pending.request.danger ? "red" : "accent"}`} />
+              <span className="panel-title">{pending.request.title}</span>
+            </div>
+            <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {pending.request.body ? <div className="hint">{pending.request.body}</div> : null}
+              {pending.kind === "prompt" ? (
+                <div className="field">
+                  <input
+                    autoFocus
+                    placeholder={pending.request.placeholder}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && draft.trim()) close(draft.trim());
+                    }}
+                  />
+                </div>
+              ) : null}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className={`btn ${pending.kind === "confirm" && pending.request.danger ? "" : "primary"}`}
+                  style={{ flex: 1, ...(pending.kind === "confirm" && pending.request.danger ? { borderColor: "var(--red)", color: "var(--red)" } : {}) }}
+                  disabled={pending.kind === "prompt" && !draft.trim()}
+                  onClick={() => close(pending.kind === "prompt" ? draft.trim() : true)}
+                >
+                  {pending.request.confirmLabel ?? "OK"}
+                </button>
+                <button className="btn" style={{ flex: 1 }} onClick={() => close(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </AskCtx.Provider>
+  );
+}
+
 /* --------------------------------------------------------------- controls -- */
 
 /** The prototype's `.slider-btns` row, as a real single-choice control. */

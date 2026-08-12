@@ -3,7 +3,7 @@
 import { useT } from "@/lib/i18n";
 import { useState } from "react";
 import { useNav } from "../Console";
-import { ago, num, postJson, useJson, useToast } from "../ui";
+import { ago, num, postJson, useAsk, useJson, useToast } from "../ui";
 
 /**
  * Where this console's source lives.
@@ -39,6 +39,7 @@ interface Webhooks {
 export default function Developers() {
   const t = useT();
   const toast = useToast();
+  const ask = useAsk();
   const { status, reloadStatus } = useNav();
   const [newKey, setNewKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -137,7 +138,13 @@ export default function Developers() {
                 style={{ flex: 1 }}
                 disabled={!cred.data?.credential.present}
                 onClick={async () => {
-                  if (!confirm(t("Revoke the stored key? Queued jobs will be cancelled."))) return;
+                  const yes = await ask.confirm({
+                    title: t("Revoke the stored key?"),
+                    body: t("Queued jobs are cancelled and nothing can run until another key is saved."),
+                    confirmLabel: t("REVOKE"),
+                    danger: true,
+                  });
+                  if (!yes) return;
                   await postJson("/api/credentials", undefined, "DELETE");
                   cred.reload();
                   reloadStatus();
@@ -409,6 +416,7 @@ interface ProviderRow {
 function ModelKeys() {
   const t = useT();
   const toast = useToast();
+  const ask = useAsk();
   const { data, reload } = useJson<{ providers: ProviderRow[]; variables: EnvVariable[]; file: string }>("/api/providers");
 
   const [name, setName] = useState("");
@@ -458,9 +466,14 @@ function ModelKeys() {
                 <button
                   className="chip"
                   style={{ fontSize: 8, minHeight: 20 }}
-                  onClick={() => {
-                    const entered = window.prompt(t("API key for {label}", { label: p.label }));
-                    if (entered?.trim()) void post({ action: "add-provider", id: p.id, base: p.base, key: entered.trim() }, t("Saved"));
+                  onClick={async () => {
+                    const entered = await ask.prompt({
+                      title: t("API key for {label}", { label: p.label }),
+                      body: t("Written to .env.local at mode 600 and applied immediately. It is never sent back to this page."),
+                      placeholder: "sk-…",
+                      confirmLabel: t("SAVE"),
+                    });
+                    if (entered) void post({ action: "add-provider", id: p.id, base: p.base, key: entered }, t("Saved"));
                   }}
                 >
                   {p.configured ? t("REPLACE") : t("ADD")}

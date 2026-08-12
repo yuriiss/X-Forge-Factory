@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n";
 import { readEvent, type ChatEvent } from "@/lib/chatEvents";
 import { stash, TARGETS } from "@/lib/handoff";
 import { useNav } from "../Console";
-import { bytes as humanBytes, useJson, useToast } from "../ui";
+import { bytes as humanBytes, useAsk, useJson, useToast } from "../ui";
 import SkillPicker from "../SkillPicker";
 
 /**
@@ -128,6 +128,7 @@ function titleOf(msgs: Msg[]): string {
 export default function Chat() {
   const t = useT();
   const toast = useToast();
+  const ask = useAsk();
   const { go } = useNav();
   const fleet = useJson<{ cli: CliAgent[]; providers: ProviderInfo[] }>("/api/chat/agents", { intervalMs: 30_000 });
   const saved = useJson<{ choice: Choice }>("/api/chat/settings");
@@ -582,7 +583,13 @@ export default function Chat() {
                     className="icon-btn"
                     title={t("Delete")}
                     onClick={async () => {
-                      if (!window.confirm(t("Delete this transcript from disk?"))) return;
+                      const yes = await ask.confirm({
+                        title: t("Delete this transcript?"),
+                        body: t("It is removed from disk — this is the model's own record of the conversation, not just this console's copy."),
+                        confirmLabel: t("DELETE"),
+                        danger: true,
+                      });
+                      if (!yes) return;
                       await fetch(`/api/chat/sessions?agent=${encodeURIComponent(choice.id)}&id=${encodeURIComponent(session.id)}`, { method: "DELETE" });
                       setCliSessions((prev) => prev.filter((x) => x.id !== session.id));
                     }}

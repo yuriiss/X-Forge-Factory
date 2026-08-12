@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ToastProvider, useJson, num } from "./ui";
+import { AskProvider, ToastProvider, useJson, num } from "./ui";
 import { LangProvider, LANGS, LANG_LABEL, LANG_NAME, useLang, useT } from "@/lib/i18n";
 import Dashboard from "./views/Dashboard";
 import Chat from "./views/Chat";
@@ -173,6 +173,7 @@ function Shell() {
 
   return (
       <ToastProvider>
+        <AskProvider>
         <NavCtx.Provider value={{ view, go, status: status ?? null, reloadStatus: reload }}>
         <div className="app">
           <aside className="sidebar">
@@ -237,6 +238,7 @@ function Shell() {
           </main>
         </div>
         </NavCtx.Provider>
+        </AskProvider>
       </ToastProvider>
   );
 }

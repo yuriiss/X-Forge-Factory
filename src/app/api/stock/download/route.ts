@@ -1,6 +1,6 @@
 import { handle, body } from "@/lib/server/http";
-import { MagnificError, rest } from "@/lib/server/magnific";
-import { callTool, isConnected } from "@/lib/server/mcp";
+import { MagnificError } from "@/lib/server/magnific";
+import { resolveStockUrl } from "@/lib/server/stockUrl";
 import { createJob, transition } from "@/lib/server/repo";
 import { downloadToVault } from "@/lib/server/vault";
 
@@ -33,68 +33,13 @@ interface Body extends Record<string, unknown> {
   title?: string;
 }
 
-/** The REST paths that have answered for each library, in the order worth trying. */
-const CANDIDATES: Record<string, string[]> = {
-  images: ["/v1/resources/{id}/download", "/v1/resources/{id}/download/png"],
-  videos: ["/v1/videos/{id}/download"],
-  icons: ["/v1/icons/{id}/download", "/v1/icons/{id}/download/png"],
-  music: ["/v1/music/{id}/download"],
-  sfx: ["/v1/sound-effects/{id}/download"],
-};
-
-/** MCP's own name for each library, used when REST has nothing to say. */
-const MCP_TYPE: Record<string, string> = { images: "photo", videos: "video", icons: "icon" };
-
-function urlIn(value: unknown, depth = 0): string | null {
-  if (depth > 3) return null;
-  if (typeof value === "string") return value.startsWith("http") ? value : null;
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = urlIn(item, depth + 1);
-      if (found) return found;
-    }
-    return null;
-  }
-  if (value && typeof value === "object") {
-    for (const field of ["url", "download_url", "href", "source", "data", "file_url"]) {
-      const found = urlIn((value as Record<string, unknown>)[field], depth + 1);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 export async function POST(req: Request) {
   const input = await body<Body>(req);
 
   return handle(async (ctx) => {
     if (!/^[\w-]+$/.test(String(input.id))) throw new MagnificError("bad item id", 400, "invalid_params");
 
-    let source = input.url && input.url.startsWith("http") ? input.url : null;
-    const attempts: string[] = [];
-
-    for (const template of CANDIDATES[input.type] ?? []) {
-      if (source) break;
-      const path = template.replace("{id}", String(input.id));
-      try {
-        source = urlIn(await rest<unknown>(ctx, path));
-        attempts.push(`${path} → ${source ? "ok" : "no url in the answer"}`);
-      } catch (e) {
-        attempts.push(`${path} → ${(e as Error).message.slice(0, 80)}`);
-      }
-    }
-
-    // MCP knows this one under a different name and a different shape; it is worth asking
-    // before telling an operator the file cannot be had.
-    if (!source && MCP_TYPE[input.type] && isConnected()) {
-      try {
-        const answer = await callTool("stock_download", { id: Number(input.id), type: MCP_TYPE[input.type] });
-        source = urlIn(answer);
-        attempts.push(`mcp stock_download → ${source ? "ok" : "no url in the answer"}`);
-      } catch (e) {
-        attempts.push(`mcp stock_download → ${(e as Error).message.slice(0, 80)}`);
-      }
-    }
+    const { url: source, attempts } = await resolveStockUrl(ctx, input.type, String(input.id), input.url);
 
     if (!source) {
       throw new MagnificError(

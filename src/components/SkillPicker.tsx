@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
-import { useToast } from "./ui";
+import { useAsk, useToast } from "./ui";
 
 /**
  * Choosing skills, and installing new ones.
@@ -69,6 +69,7 @@ const VERDICT_COLOUR: Record<string, string> = {
 export default function SkillPicker({ agentId, selected, onChange }: { agentId: string; selected: string[]; onChange: (next: string[]) => void }) {
   const t = useT();
   const toast = useToast();
+  const ask = useAsk();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"installed" | "find">("installed");
   const [installed, setInstalled] = useState<Skill[]>([]);
@@ -150,9 +151,14 @@ export default function SkillPicker({ agentId, selected, onChange }: { agentId: 
   const install = async (hit: Hit, force: boolean) => {
     let reason = "";
     if (force) {
-      const answer = window.prompt(t("This skill needs review. Why install it anyway?"));
-      if (!answer?.trim()) return;
-      reason = answer.trim();
+      const answer = await ask.prompt({
+        title: t("This skill needs review"),
+        body: t("The scan found something worth a person's judgement. Say why you are installing it anyway — the reason is written to the audit log."),
+        placeholder: t("reason"),
+        confirmLabel: t("INSTALL ANYWAY"),
+      });
+      if (!answer) return;
+      reason = answer;
     }
     setBusy(hit.skillId);
     try {
@@ -230,9 +236,14 @@ export default function SkillPicker({ agentId, selected, onChange }: { agentId: 
 
   const uploadInstallAnyway = async () => {
     if (!pendingUpload) return;
-    const answer = window.prompt(t("This skill needs review. Why install it anyway?"));
-    if (!answer?.trim()) return;
-    await submitUpload(pendingUpload, true, answer.trim());
+    const answer = await ask.prompt({
+      title: t("This skill needs review"),
+      body: t("The scan found something worth a person's judgement. Say why you are installing it anyway — the reason is written to the audit log."),
+      placeholder: t("reason"),
+      confirmLabel: t("INSTALL ANYWAY"),
+    });
+    if (!answer) return;
+    await submitUpload(pendingUpload, true, answer);
   };
 
   const openPreview = async (hit: Hit) => {
@@ -254,7 +265,13 @@ export default function SkillPicker({ agentId, selected, onChange }: { agentId: 
   };
 
   const remove = async (name: string) => {
-    if (!window.confirm(t("Delete the {name} skill from disk?", { name }))) return;
+    const yes = await ask.confirm({
+      title: t("Delete {name}?", { name }),
+      body: t("The skill folder is removed from disk. It can be installed again from the registry."),
+      confirmLabel: t("DELETE"),
+      danger: true,
+    });
+    if (!yes) return;
     await fetch(`/api/chat/skills?agent=${encodeURIComponent(agentId)}&name=${encodeURIComponent(name)}`, { method: "DELETE" });
     onChange(selected.filter((s) => s !== name));
     await reload();

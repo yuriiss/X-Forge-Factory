@@ -71,6 +71,13 @@ versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
   and a tab that lies is worse than one that is missing.
 - Clicking a stock tile opens it full size, and a video plays there.
 
+- **Music plays.** A sound effect carries its file in the search result; a music track only
+  exists behind the download endpoint, so pressing play resolves it once and reuses it. The
+  panel says plainly that this costs the same call a download does.
+- Questions are asked in the console's own dress rather than the browser's: a confirm that
+  says which skill, which transcript or which key, in the language the console is speaking,
+  instead of a white box captioned with the origin.
+
 ### Fixed
 
 - **The viewer lost the picture on zoom out.** Two faults: the offset was never bounded, so

@@ -916,7 +916,29 @@ export const uk: Record<string, string> = {
   "✓ done": "✓ готово",
   "tokens out": "токенів вийшло",
 
+  /* Questions the console asks */
+  "This skill needs review": "Цей скіл потребує перевірки людиною",
+  "The scan found something worth a person's judgement. Say why you are installing it anyway — the reason is written to the audit log.":
+    "Перевірка знайшла те, що має оцінити людина. Напишіть, чому ви все одно встановлюєте — причина потрапить до журналу аудиту.",
+  reason: "причина",
+  "Delete {name}?": "Видалити {name}?",
+  "The skill folder is removed from disk. It can be installed again from the registry.":
+    "Теку скіла буде видалено з диска. Його можна встановити з реєстру знову.",
+  DELETE: "ВИДАЛИТИ",
+  "Delete this transcript?": "Видалити цю історію?",
+  "It is removed from disk — this is the model's own record of the conversation, not just this console's copy.":
+    "Її буде видалено з диска — це власний запис розмови моделі, а не лише копія цієї консолі.",
+  "Revoke the stored key?": "Відкликати збережений ключ?",
+  "Queued jobs are cancelled and nothing can run until another key is saved.":
+    "Завдання в черзі буде скасовано, і нічого не запуститься, доки не збережено інший ключ.",
+  REVOKE: "ВІДКЛИКАТИ",
+  "Written to .env.local at mode 600 and applied immediately. It is never sent back to this page.":
+    "Записується в .env.local з правами 600 і діє одразу. Назад на цю сторінку значення не повертається.",
+
   /* Stock */
+  "Play — fetches the track, which counts as a download": "Відтворити — завантажує трек, і це рахується як завантаження",
+  "A music track only exists behind the download endpoint, so pressing play fetches it — one call, counted the same way a download is.":
+    "Музичний трек існує лише за ендпоінтом завантаження, тож натискання відтворення його дістає — один виклик, який рахується як завантаження.",
   "The provider's own site also lists 3D models and fonts; neither has a filter this API honours, so neither is shown here rather than shown empty.":
     "На сайті провайдера є ще 3D-моделі та шрифти; жоден фільтр цього API їх не відбирає, тож тут їх немає — краще так, ніж порожня вкладка.",
   "Saved to the vault: {name}": "Збережено у сховище: {name}",
