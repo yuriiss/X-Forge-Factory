@@ -5,9 +5,10 @@
 **An operator console for Magnific — every capability on one surface, with an engine that
 treats credits like money.**
 
-[![version](https://img.shields.io/badge/version-0.0.3-e8b64c?style=flat-square)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.0.4-e8b64c?style=flat-square)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-AGPL--3.0-3d4757?style=flat-square)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5-4ade80?style=flat-square)](https://nodejs.org)
+[![platform](https://img.shields.io/badge/platform-Linux%20%C2%B7%20macOS%20%C2%B7%20Windows-3d4757?style=flat-square)](#requirements)
 [![next](https://img.shields.io/badge/Next.js-16-0d1322?style=flat-square)](https://nextjs.org)
 [![tests](https://img.shields.io/badge/tests-108%20passing-4ade80?style=flat-square)](#tests)
 [![guidebook](https://img.shields.io/badge/guidebook-31%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
@@ -34,8 +35,23 @@ git clone https://github.com/yuriiss/X-Forge-Factory.git
 cd X-Forge-Factory
 npm install
 npm run setup     # writes .env.local, verifies your key against the live API
-npm run dev       # → http://127.0.0.1:7777
+npm run build
+npm start         # → http://127.0.0.1:7777
 ```
+
+`npm start` serves the build. Use `npm run dev` only to work on X-Forge itself — it is the
+development server, with hot reload and the slower first paint that comes with it.
+
+To have the console come back after a reboot:
+
+```bash
+npm run service:install     # systemd user unit on Linux, launchd agent on macOS
+```
+
+It runs as you rather than as root, which is the point: the console spawns the coding CLIs
+on this machine and reads the vault in your home directory, and a system service would find
+neither. On Windows the same command prints the two ways to do it there — Task Scheduler or
+the startup folder — rather than half-registering a service that needs elevation.
 
 Then open **MCP Console → CONNECT** and sign in once. Without it the console still generates
 images and video on the REST key, but you lose the balance, cost estimates, the full
@@ -47,6 +63,26 @@ catalogue, text-to-speech, 3D and most of Edit Suite.
 >
 > **Українською:** [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) · [PDF](docs/X-Forge-Guidebook-UK.pdf).
 > The console itself speaks both languages — the picker sits in the topbar.
+
+---
+
+## Requirements
+
+| | |
+|---|---|
+| Node | 22.5 or newer — the database is `node:sqlite`, which arrives with Node itself |
+| OS | Linux, macOS, Windows |
+| Account | A Magnific API key, and a browser sign-in for MCP |
+
+Windows works, with two things worth knowing. `.env.local` holds model and provider keys at
+mode 600 on Linux and macOS; on Windows it inherits the folder's ACL instead, because
+`chmod` has no equivalent there — so put the checkout somewhere only you can read. And the
+service is not installed for you: `npm run service:install` prints the Task Scheduler entry
+to create rather than half-registering something that needs elevation.
+
+The Chat screen finds the coding CLIs by asking the system where they are — `which` on Linux
+and macOS, `where.exe` on Windows — so a CLI installed while the console is open is noticed
+within half a minute, on any of the three.
 
 ---
 
@@ -208,9 +244,9 @@ tests/            unit · api · e2e
 | | |
 |---|---|
 | [`GUIDEBOOK.md`](GUIDEBOOK.md) | Every screen and control, with screenshots — 22 sections |
-| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 31 pages |
+| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 32 pages |
 | [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) | Те саме українською — 22 розділи |
-| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 34 сторінки |
+| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 35 сторінок |
 | [`CHANGELOG.md`](CHANGELOG.md) | What shipped, and when |
 | [`.env.example`](.env.example) | Every setting, explained |
 

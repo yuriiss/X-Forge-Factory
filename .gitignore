@@ -39,3 +39,6 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# The production build, and the service unit a machine installs for itself.
+.next/

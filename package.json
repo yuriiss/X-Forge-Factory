@@ -1,12 +1,14 @@
 {
   "name": "x-forge",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "next build",
     "start": "node scripts/dev.mjs start",
+    "service:install": "node scripts/service.mjs install",
+    "service:remove": "node scripts/service.mjs remove",
     "lint": "tsc --noEmit",
     "test": "npm --prefix tests run test:unit",
     "test:unit": "npm --prefix tests run test:unit",

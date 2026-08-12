@@ -159,24 +159,48 @@ export function spawnEnv(): NodeJS.ProcessEnv {
     "/opt/homebrew/bin",
   ].filter((dir) => existsSync(dir));
 
-  const current = (process.env.PATH ?? "").split(path.delimiter);
+  // Windows resolves PATH case-insensitively but Node exposes whatever the parent set, so
+  // the variable is found by name rather than assumed to be spelled `PATH`.
+  const key = Object.keys(process.env).find((k) => k.toUpperCase() === "PATH") ?? "PATH";
+  const current = (process.env[key] ?? "").split(path.delimiter);
   const merged = [...new Set([...current, ...extra])].filter(Boolean);
-  return { ...process.env, PATH: merged.join(path.delimiter) };
+  return { ...process.env, [key]: merged.join(path.delimiter) };
 }
 
 const CACHE = new Map<string, { at: number; found: string | null }>();
 const TTL_MS = 30_000;
 
-/** Absolute path to a binary, or null. Cached briefly: an operator may install one mid-session. */
+/**
+ * Absolute path to a binary, or null.
+ *
+ * `which` does not exist on Windows and `where.exe` prints every match rather than the
+ * first, so the platform decides both the command and how to read its answer. Cached
+ * briefly, because an operator may install a CLI while the console is open and expects it
+ * to be noticed without a restart.
+ */
 export function resolveBin(name: string): string | null {
   const hit = CACHE.get(name);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.found;
 
+  const windows = process.platform === "win32";
   let found: string | null = null;
   try {
-    const out = execFileSync("which", [name], { env: spawnEnv(), encoding: "utf8", timeout: 4000 });
-    const first = out.split("\n")[0]?.trim();
-    if (first && existsSync(first)) found = first;
+    const out = execFileSync(windows ? "where.exe" : "which", [name], {
+      env: spawnEnv(),
+      encoding: "utf8",
+      timeout: 4000,
+      windowsHide: true,
+    });
+
+    // Windows lists every hit, and the useful one is whichever comes first that exists;
+    // a bare name may also resolve to a `.cmd` shim rather than an executable.
+    for (const line of out.split(/\r?\n/)) {
+      const candidate = line.trim();
+      if (candidate && existsSync(candidate)) {
+        found = candidate;
+        break;
+      }
+    }
   } catch {
     found = null;
   }

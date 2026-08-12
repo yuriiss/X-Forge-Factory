@@ -3,6 +3,38 @@
 All notable changes to X-Forge. Format follows [Keep a Changelog](https://keepachangelog.com/1.1.0/);
 versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] — 2026-08-12
+
+Runs on three operating systems, serves a build rather than a development server, and comes
+back after a reboot.
+
+### Changed
+
+- **`npm start` is the way to run it.** The quick start builds first and serves the build;
+  `npm run dev` is for working on X-Forge itself. `start` refuses to run without a build
+  rather than letting Next report a missing manifest.
+
+### Added
+
+- **`npm run service:install`** — a systemd user unit on Linux, a launchd agent on macOS,
+  and printed instructions on Windows, where registering a service properly needs elevation
+  and a half-registered one is worse than none. It runs as you rather than as root: the
+  console spawns the coding CLIs on this machine and reads a vault in your home directory,
+  and a system service would find neither. Lingering is requested where it is missing, so
+  the console returns at boot rather than at login.
+- A `Requirements` section in the README that states which operating systems are supported
+  and what differs on each.
+
+### Fixed
+
+- **Windows.** Three faults, all of them fatal there and invisible here. Model detection ran
+  `which`, which does not exist on Windows — every CLI would have shown as missing.
+  `npm run dev` spawned `node_modules/.bin/next`, which on Windows is `next.cmd` and cannot
+  be executed directly. And `PATH` was read by exact name, though Windows spells it however
+  the parent process did.
+- `.env.local` is no longer chmod-ed on Windows, where it does nothing; the README says what
+  protects it there instead of implying the mode does.
+
 ## [0.0.3] — 2026-08-12
 
 A chat that talks to every model on the machine, skills behind a scanner, and a stock
@@ -222,6 +254,7 @@ refuses base64; `improve-prompt` requires an undocumented `type`; the MCP list t
 in an indented outline rather than JSON; `simulate_cost` takes different arguments from the
 tool it prices; background removal serves PNG as `application/octet-stream`.
 
+[0.0.4]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.4
 [0.0.3]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.3
 [0.0.2]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.2
 [0.0.1]: https://github.com/yuriiss/X-Forge-Factory/releases/tag/v0.0.1

@@ -1,6 +1,6 @@
 # X-FORGE · Operator Guidebook
 
-<sub>X-Forge v0.0.3 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
+<sub>X-Forge v0.0.4 · by Yurii S. ([@yuriiss](https://github.com/yuriiss)) · AGPL-3.0-or-later</sub>
 
 Everything in this console spends real credits from a real Magnific account. This guide
 covers every screen and every control: what it does, what it costs, what it needs from you
@@ -38,8 +38,19 @@ first, and what to do when it refuses.
 
 ```
 npm install
-npm run dev          # http://127.0.0.1:7777
+npm run setup        # writes .env.local and verifies your key
+npm run build
+npm start            # http://127.0.0.1:7777
 ```
+
+`npm run dev` exists too, and is the development server — hot reload, slower first paint.
+Use it when you are changing X-Forge, not when you are using it.
+
+To have the console come back after a reboot, `npm run service:install` writes a systemd
+user unit on Linux or a launchd agent on macOS, running as you rather than as root: the
+console spawns the coding CLIs on this machine and reads a vault in your home directory,
+and a service running as another user would find neither. On Windows it prints the Task
+Scheduler entry to create instead.
 
 The console needs two things, and the topbar tells you whether it has them.
 

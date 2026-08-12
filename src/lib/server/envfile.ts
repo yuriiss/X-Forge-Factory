@@ -59,7 +59,11 @@ export function setEnv(name: string, value: string): void {
   const file = envFile();
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, raw, { mode: 0o600 });
-  chmodSync(file, 0o600);
+
+  // Owner-only, where the filesystem has an owner. On Windows `chmod` is close to a no-op —
+  // the file inherits the folder's ACL — so this is not the protection it is on Linux and
+  // macOS, and the Developers panel says so rather than implying otherwise.
+  if (process.platform !== "win32") chmodSync(file, 0o600);
 
   // The running process has already read the file; without this the key would only take
   // effect after a restart, and an operator who just saved it would see it fail once.
