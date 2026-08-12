@@ -1,7 +1,8 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useMemo, useState } from "react";
+import { collect } from "@/lib/handoff";
+import { useEffect, useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, useEstimate, useExample, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
 /**
@@ -68,6 +69,16 @@ export default function AudioLab() {
     const q = voiceQuery.toLowerCase();
     return all.filter((v) => v.name.toLowerCase().includes(q) || (v.languages ?? []).some((l) => l.toLowerCase().includes(q))).slice(0, 200);
   }, [catalog.data, voiceQuery]);
+
+  useEffect(() => {
+    // Several prompt fields live here; a handoff always targets the music one.
+    const handoff = collect("audio-lab");
+    if (handoff) {
+      setMusicPrompt(handoff.prompt);
+      toast.push("ok", t("Prompt received from {from}", { from: handoff.from }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const musicParams = { prompt: musicPrompt, duration: musicLength, negative_prompt: musicNegative || undefined, seed: musicSeed || undefined };
   const musicEst = useEstimate("audio.music", musicParams, !!musicPrompt.trim());

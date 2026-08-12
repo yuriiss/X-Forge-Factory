@@ -916,8 +916,32 @@ export const uk: Record<string, string> = {
   "✓ done": "✓ готово",
   "tokens out": "токенів вийшло",
 
+  /* Chat: attachments, hand-off, the model chooser */
+  "Attach a file": "Прикріпити файл",
+  "Enter sends · Shift+Enter starts a new line · paste or attach an image and ask about it":
+    "Enter надсилає · Shift+Enter — новий рядок · вставте або прикріпіть зображення й запитайте про нього",
+  "INSTALLED ON THIS MACHINE": "ВСТАНОВЛЕНО НА ЦІЙ МАШИНІ",
+  "your key": "ваш ключ",
+  "→ USE AS PROMPT": "→ ВЗЯТИ ЯК ПРОМТ",
+  "Sent to {label}": "Надіслано в {label}",
+  "Prompt received from {from}": "Промт отримано з {from}",
+  PERMISSIONS: "ДОЗВОЛИ",
+  "WORKING DIRECTORY": "РОБОЧА ТЕКА",
+
   /* Skills */
   SKILLS: "СКІЛИ",
+  "⇪ ZIP": "⇪ ZIP",
+  "⇪ FOLDER": "⇪ ТЕКА",
+  "✎ PASTE": "✎ ВСТАВИТИ",
+  "Skill name": "Назва скіла",
+  "Paste a SKILL.md…": "Вставте SKILL.md…",
+  "Scan and install": "Перевірити і встановити",
+  "Refused before scanning: {list}": "Відхилено ще до перевірки: {list}",
+  "🔍 PREVIEW": "🔍 ПЕРЕГЛЯД",
+  "◷ LOADING…": "◷ ЗАВАНТАЖУЮ…",
+  "Loading…": "Завантаження…",
+  Install: "Встановити",
+  Close: "Закрити",
   Installed: "Встановлені",
   "Find new": "Знайти нові",
   "Search {n} installed skills…": "Пошук серед {n} встановлених скілів…",

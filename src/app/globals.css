@@ -286,6 +286,14 @@ textarea.composer::placeholder { color: var(--muted); }
   border: 1px solid var(--border-3); border-radius: 3px;
 }
 
+/* The registry preview panel: a SKILL.md is longer than a verdict, so it gets its own
+   scroll region rather than pushing the rest of the hit list off-screen. */
+.skill-preview { padding: 8px 9px; margin-top: 2px; }
+/* The body scrolls, the actions do not: a preview whose Install button is below the fold
+   of a menu that has its own fold is a button nobody finds. */
+.skill-preview pre.json { max-height: 190px; }
+.skill-menu { max-height: 78vh; overflow-y: auto; }
+
 /* Chat is two columns, not the forge's three: the model rail sits inside the left one
    rather than beside it, so a conversation gets the width a conversation needs. */
 .chat-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
@@ -295,3 +303,24 @@ textarea.composer::placeholder { color: var(--muted); }
 .model-rail .tool-pick { width: 62px; height: 54px; padding: 3px; }
 .model-rail .tool-pick span:nth-child(2) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .model-rail .tool-pick .dot { width: 5px; height: 5px; }
+
+/* The model selector: wider than the language menu because a row carries a name, what kind
+   of model it is, and whether it can be reached. */
+.model-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 70;
+  width: 290px; padding: 6px;
+  background: var(--menu); border: 1px solid var(--border-2); border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(3, 6, 13, .58);
+  max-height: 460px; overflow-y: auto;
+}
+.model-option {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 6px 8px; font: inherit; font-size: 11px; text-align: left;
+  color: var(--text-2); background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+}
+.model-option:hover { background: var(--menu-hover); }
+.model-option.active { color: var(--text); background: var(--row-active); }
+
+/* Sits under an answer rather than inside it: the buttons act on the message, they are not
+   part of what the model said. */
+.push-row { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 34px; }

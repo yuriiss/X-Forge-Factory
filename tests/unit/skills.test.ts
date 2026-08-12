@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { scanSkill } from "@/lib/server/skillscan";
 import { buildArgs, AGENTS } from "@/lib/server/agents";
+import { unzip } from "@/lib/server/miniZip";
 
 /**
  * The skill gate, tested at the point where the decision is made.
@@ -117,5 +118,98 @@ describe("cli arguments", () => {
     const args = buildArgs(codex, { prompt: "hello" });
     expect(args[0]).toBe("exec");
     expect(args).toContain("--skip-git-repo-check");
+  });
+});
+
+describe("zip upload", () => {
+  const dirs: string[] = [];
+  const dest = () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "x-forge-unzip-test-"));
+    dirs.push(dir);
+    return dir;
+  };
+
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
+
+  const LIMITS = { maxEntries: 2000, maxFileBytes: 16 * 1024 * 1024, maxTotalBytes: 64 * 1024 * 1024 };
+
+  /** A one-entry zip with the name written verbatim, so a hostile name can be tested. */
+  function zipWith(name: string, body: string): Buffer {
+    const nameBytes = Buffer.from(name, "utf8");
+    const data = Buffer.from(body, "utf8");
+    const crc = 0; // not verified by the reader, and not what these tests are about
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 8); // stored
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBytes.length, 26);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(0, 10); // stored
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(data.length, 20);
+    central.writeUInt32LE(data.length, 24);
+    central.writeUInt16LE(nameBytes.length, 28);
+
+    const localBlock = Buffer.concat([local, nameBytes, data]);
+    central.writeUInt32LE(0, 42); // local header offset
+
+    const end = Buffer.alloc(22);
+    end.writeUInt32LE(0x06054b50, 0);
+    end.writeUInt16LE(1, 8);
+    end.writeUInt16LE(1, 10);
+    end.writeUInt32LE(46 + nameBytes.length, 12);
+    end.writeUInt32LE(localBlock.length, 16);
+
+    return Buffer.concat([localBlock, central, nameBytes, end]);
+  }
+
+  it("unpacks an ordinary entry", () => {
+    const dir = dest();
+    const result = unzip(zipWith("SKILL.md", "---\nname: x\n---\n"), dir, LIMITS);
+    expect(result.written).toEqual(["SKILL.md"]);
+    expect(readFileSync(path.join(dir, "SKILL.md"), "utf8")).toContain("name: x");
+  });
+
+  it("refuses an entry that climbs out of the directory", () => {
+    const dir = dest();
+    const result = unzip(zipWith("../../escaped.md", "x"), dir, LIMITS);
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped[0].reason).toBe("path traversal");
+    expect(existsSync(path.join(path.dirname(path.dirname(dir)), "escaped.md"))).toBe(false);
+  });
+
+  it("refuses an absolute entry", () => {
+    const result = unzip(zipWith("/etc/cron.d/pwn", "x"), dest(), LIMITS);
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped[0].reason).toBe("absolute path");
+  });
+
+  it("refuses a Windows-separator escape that POSIX would treat as a filename", () => {
+    const result = unzip(zipWith("..\\..\\escaped.md", "x"), dest(), LIMITS);
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped[0].reason).toBe("backslash in path");
+  });
+
+  it("refuses macOS metadata rather than scanning it", () => {
+    const result = unzip(zipWith("__MACOSX/._SKILL.md", "x"), dest(), LIMITS);
+    expect(result.written).toHaveLength(0);
+  });
+
+  it("refuses a file over the per-file cap without writing it", () => {
+    const result = unzip(zipWith("big.txt", "0123456789"), dest(), { ...LIMITS, maxFileBytes: 4 });
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped[0].reason).toContain("per-file cap");
+  });
+
+  it("rejects something that is not a zip at all", () => {
+    expect(() => unzip(Buffer.from("hello"), dest(), LIMITS)).toThrow();
   });
 });

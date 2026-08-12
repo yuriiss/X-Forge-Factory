@@ -280,6 +280,64 @@ export interface RegistryHit {
   installs?: number;
 }
 
+export interface PreviewResult {
+  name: string;
+  body: string;
+  files: string[];
+  verdict: Verdict;
+}
+
+/**
+ * Download a registry skill into quarantine and scan it, but never promote it — the
+ * "preview" side of installFromRegistry, kept separate rather than adding a flag to that
+ * function because a function that sometimes writes to disk and sometimes does not is
+ * harder to audit than two functions that always do one or the other. Reuses the same
+ * `skills add` invocation shape so the preview and a real install see identical bytes.
+ */
+export async function previewFromRegistry(source: string, skillId: string): Promise<PreviewResult> {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(source)) throw new Error("source must look like owner/repo");
+  if (!isSkillName(skillId)) throw new Error("invalid skill id");
+
+  const pen = quarantine();
+  try {
+    await run("npx", ["-y", "skills", "add", source, "-s", skillId, "-y", "--copy"], {
+      cwd: pen,
+      env: spawnEnv(),
+      timeout: 300_000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+
+    const found = skillDirs(pen);
+    if (!found.length) throw new Error("the download contained no SKILL.md, so there was nothing to preview");
+
+    const wanted = found.filter((dir) => path.basename(dir).toLowerCase() === skillId.toLowerCase());
+    const target = wanted[0] ?? (found.length === 1 ? found[0] : null);
+    if (!target) throw new Error("that download holds several skills — preview is one at a time");
+
+    const mdPath = path.join(target, "SKILL.md");
+    const md = existsSync(mdPath) ? readFileSync(mdPath, "utf8").slice(0, 20_000) : "";
+    const name = safeName(frontmatter(md, "name") || path.basename(target));
+
+    return { name, body: md, files: listRelative(target), verdict: scanSkill(target) };
+  } finally {
+    rmSync(pen, { recursive: true, force: true });
+  }
+}
+
+/** File paths under `dir`, relative to it — for showing a preview reader what a skill
+ * actually ships, not just its SKILL.md. */
+function listRelative(dir: string, prefix = "", depth = 0): string[] {
+  if (depth > 6) return [];
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === ".git") continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) out.push(...listRelative(path.join(dir, entry.name), rel, depth + 1));
+    else out.push(rel);
+  }
+  return out;
+}
+
 export async function searchRegistry(query: string): Promise<RegistryHit[]> {
   const res = await fetch(`https://skills.sh/api/search?q=${encodeURIComponent(query)}`, {
     headers: { accept: "application/json" },

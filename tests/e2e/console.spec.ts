@@ -147,18 +147,41 @@ test("chat finds the model CLIs installed on this machine", async ({ page }) => 
   await page.goto("/#chat");
   await expect(page.locator(".intro h1")).toHaveText("CHAT", { timeout: 20_000 });
 
-  // The rail is populated by looking at the machine, so an entry proves the probe ran.
-  const rail = page.locator(".model-rail .tool-pick");
-  await expect(rail.first()).toBeVisible({ timeout: 20_000 });
-  expect(await rail.count()).toBeGreaterThan(1);
+  // One selector for both kinds of model, populated by looking at the machine rather than
+  // by configuration — an entry is proof the probe ran.
+  await page.locator(".intro .chip.active").first().click();
+  const options = page.locator(".model-option");
+  await expect(options.first()).toBeVisible({ timeout: 20_000 });
+  expect(await options.count()).toBeGreaterThan(3);
 
   // Availability is shown rather than hidden: every entry carries a light either way.
-  await expect(page.locator(".model-rail .tool-pick .dot").first()).toBeVisible();
+  await expect(page.locator(".model-option .dot").first()).toBeVisible();
+  await page.keyboard.press("Escape");
 
-  // The composer refuses to send nothing.
+  // The composer refuses to send nothing, and accepts something.
   await expect(page.locator("button:has-text('SEND')")).toBeDisabled();
   await page.locator("textarea.composer").fill("hello");
   await expect(page.locator("button:has-text('SEND')")).toBeEnabled();
+});
+
+test("an answer can be sent to a generator", async ({ page }) => {
+  // The hand-off is a hop between two views, so it is exercised the way it is used rather
+  // than by calling the module: park a prompt, open the generator, and read the field.
+  await page.goto("/#chat");
+  await expect(page.locator(".intro h1")).toHaveText("CHAT", { timeout: 20_000 });
+
+  const prompt = "a lighthouse in a storm, long exposure";
+  await page.evaluate((text) => {
+    window.sessionStorage.setItem("x-forge.handoff.image-forge", JSON.stringify({ prompt: text, from: "test" }));
+  }, prompt);
+
+  await page.locator('.nav-item:has-text("Image Forge")').click();
+  await expect(page.locator("textarea").first()).toHaveValue(prompt, { timeout: 15_000 });
+
+  // Collected once: a reload must not refill a field the operator has since edited.
+  await page.reload();
+  await page.locator('.nav-item:has-text("Image Forge")').click();
+  await expect(page.locator("textarea").first()).not.toHaveValue(prompt, { timeout: 15_000 });
 });
 
 function labelFor(id: string): string {

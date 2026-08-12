@@ -1,4 +1,4 @@
-import { installFromDir, installFromRegistry, readSkillBody, scanInstalled, searchRegistry, uninstall } from "@/lib/server/skills";
+import { installFromDir, installFromRegistry, previewFromRegistry, readSkillBody, scanInstalled, searchRegistry, uninstall } from "@/lib/server/skills";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -19,10 +19,23 @@ export async function GET(req: Request) {
   const agentId = url.searchParams.get("agent") ?? "claude";
   const query = url.searchParams.get("q");
   const preview = url.searchParams.get("preview");
+  const source = url.searchParams.get("source");
+  const skillId = url.searchParams.get("skillId");
+  const inspect = url.searchParams.get("inspect");
 
   if (preview) {
     const body = readSkillBody(agentId, preview);
     return body ? Response.json({ name: preview, body }) : Response.json({ error: "no such skill" }, { status: 404 });
+  }
+  // A look at a registry skill before it is installed: downloads into quarantine exactly
+  // as installFromRegistry does, scans it there, and deletes the quarantine directory
+  // again — nothing this branch does ever reaches the live skills directory.
+  if (inspect && source && skillId) {
+    try {
+      return Response.json(await previewFromRegistry(source, skillId));
+    } catch (e) {
+      return Response.json({ error: (e as Error).message }, { status: 502 });
+    }
   }
   if (query !== null) {
     try {

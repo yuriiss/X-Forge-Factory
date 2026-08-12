@@ -31,11 +31,31 @@ versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
   explainable-but-odd pattern, needs a person and a written reason. Every decision, override
   included, is appended to `~/.x-forge/skill-audit.jsonl`.
 
+- **One conversation, one model selector.** The choice lives on the server, so it is the
+  same model in every tab and after a restart. Switching mid-conversation keeps the
+  transcript: each CLI resumes its own session, and a model asked its first question in a
+  conversation that started elsewhere is handed a short recap.
+- **Attachments.** Attach a file or paste an image into the composer. A CLI is given the
+  path and opens the file itself, at full resolution; a provider, which has no filesystem,
+  is sent the image as data.
+- **`→ USE AS PROMPT`** under every answer, sending the text to any of the five generators
+  that take one and switching to that screen with the field filled. A fenced block wins over
+  the prose around it, because a model asked for a prompt fences the prompt and explains
+  outside it.
+- **Skills you supply yourself** — a zip, a folder, or a pasted `SKILL.md` — through the same
+  scanner as a registry install, with a hand-written zip reader rather than a new dependency.
+- **`🔍 PREVIEW`** downloads a registry skill into quarantine and shows its text and its
+  verdict without installing it.
+
 ### Notes
 
 The scan is static: it reads files and matches patterns, and never executes anything. It
 catches the obvious attacks and will not catch a clever one, which is why the findings are
 shown to the operator rather than reduced to a tick.
+
+The zip reader refuses an entry that is absolute, holds `..`, holds a backslash, or resolves
+outside the upload directory, and inflates with a hard output ceiling so a small archive
+cannot claim a large one. Seven unit tests are written as those attacks.
 
 ## [0.0.2] — 2026-08-11
 

@@ -120,9 +120,12 @@ export async function catalogue(id: string): Promise<ProviderModel[]> {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** The multipart form a chat message takes once it carries an image as well as text. */
+export type ChatContent = string | ({ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } })[];
+
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: ChatContent;
 }
 
 /**

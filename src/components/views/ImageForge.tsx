@@ -1,7 +1,8 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useMemo, useState } from "react";
+import { collect } from "@/lib/handoff";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dropzone,
   Field,
@@ -94,6 +95,15 @@ export default function ImageForge() {
   const catalog = useJson<Catalog>("/api/catalog");
   const refs = useJson<{ references: Reference[] }>("/api/loras");
   const history = useJson<{ jobs: JobView[] }>("/api/jobs?kind=&limit=12", { intervalMs: 8000 });
+
+  useEffect(() => {
+    const handoff = collect("image-forge");
+    if (handoff) {
+      setPrompt(handoff.prompt);
+      toast.push("ok", t("Prompt received from {from}", { from: handoff.from }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeKind = TOOLS.find((x) => x.id === tool)!.kind;
   const viaMcp = activeKind === "image.generate";

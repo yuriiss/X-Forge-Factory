@@ -197,15 +197,25 @@ any HTTP provider you have given a key. No Magnific credits are spent in this vi
 is created, and nothing appears in the Task Queue: the console is not paying for these
 turns, the CLI's own account is.
 
-### The model rail
+### Choosing a model
 
-Every model X-Forge knows how to drive is listed, with a light: green when the command is
-on this machine's PATH, red when it is not. Nothing is hidden — "Grok is not installed" is
+One conversation, one selector. The chip at the top of the screen lists every model X-Forge
+knows how to drive, with a light: green when the command is on this machine's PATH, red when
+it is not. Nothing is hidden — "Grok is not installed" is
 more useful than a list that quietly omits it. Hovering a model shows where its binary was
 found, which is the fastest way to notice that the console found a different Claude than
 your shell does.
 
-The detection is a lookup, not a setting. Install a CLI in another terminal and the rail
+The choice is kept on the server rather than in the browser, because it is a fact about
+this installation rather than about a tab: pick Grok here and the console is talking to Grok
+when you open it again tomorrow.
+
+Switching model does not start a new conversation. Each CLI keeps its own transcript, so
+returning to one resumes where it was; a model being asked its first question in a
+conversation that started elsewhere is handed a short recap of what was said, which is what
+makes one chat behave like one chat.
+
+The detection is a lookup, not a setting. Install a CLI in another terminal and the list
 notices within half a minute.
 
 ### A turn
@@ -226,6 +236,30 @@ its own account's money on output that goes nowhere.
 | Permissions | What the model may do to files without asking. These are agentic CLIs — they can edit |
 | Working directory | Where the CLI runs. Defaults to your home directory |
 
+### Files
+
+Attach with the `⊕` button, or paste an image straight into the composer — a screenshot in
+the clipboard is the commonest attachment there is.
+
+A file is written to disk and its path is put in the prompt, because these CLIs are agents
+with filesystem access: given a path, the model opens the file itself, at full resolution,
+with whatever tool suits it. That also survives the resume of a later turn, which an inlined
+copy would not. A provider has no filesystem, so an image travels to it as data instead and
+anything else is named rather than sent.
+
+Ask for a prompt from a picture and you get one; the next section is what to do with it.
+
+### Sending an answer to a generator
+
+Under every finished answer are two buttons. `⧉ COPY` does the obvious thing.
+`→ USE AS PROMPT` opens the five generators that take one — Image Forge, Video Forge, Audio
+Lab, Icon Foundry, Upscale Studio — and sends the text there, switching to that screen with
+the field already filled.
+
+When the answer contains a fenced block, the block is what travels rather than the prose
+around it: asked for a prompt, a model puts the prompt in a fence and its explanation
+outside, and the explanation is not what should be generated.
+
 ### Providers
 
 Below the CLIs are the HTTP providers: OpenRouter, TokenRouter, FreeInference, and any
@@ -239,6 +273,12 @@ its own, so the last twenty messages are replayed with each turn.
 A skill is a folder of instructions a model can be told to follow, discovered by the CLI
 from its own skills directory. The picker beside the model's name lists what is installed,
 and searches [skills.sh](https://skills.sh) for what is not.
+
+Three ways in, all through the same gate: install from the registry, upload your own as a
+zip or a folder, or paste a `SKILL.md` straight in. `🔍 PREVIEW` downloads a registry skill
+into quarantine and shows you its text and its verdict without installing anything — which
+is the honest order to do this in, since the whole question is whether you want that text on
+your machine.
 
 Selected skills are named in the prompt, which is what makes the model reach for one rather
 than merely have it available. For a provider, which discovers nothing, the skill's text is

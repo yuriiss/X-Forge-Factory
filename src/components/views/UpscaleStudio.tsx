@@ -1,7 +1,8 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useMemo, useState } from "react";
+import { collect } from "@/lib/handoff";
+import { useEffect, useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, Slider, Toggle, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 
 /**
@@ -64,6 +65,15 @@ export default function UpscaleStudio() {
   const vault = useJson<{ items: { id: string; url: string; kind: string; label: string }[] }>("/api/creations?scope=vault&kind=image&per_page=8", {
     intervalMs: 20_000,
   });
+
+  useEffect(() => {
+    const handoff = collect("upscale");
+    if (handoff) {
+      setPrompt(handoff.prompt);
+      toast.push("ok", t("Prompt received from {from}", { from: handoff.from }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const params = useMemo(() => {
     const base: Record<string, unknown> = { image: image?.dataUrl ?? image?.assetUrl, webhook_url: webhook || undefined };

@@ -6,8 +6,16 @@ import { sseSpawn } from "@/lib/server/sse";
 export const dynamic = "force-dynamic";
 export const maxDuration = 600;
 
+export interface Attachment {
+  name: string;
+  path: string;
+  kind: string;
+  dataUrl?: string;
+}
+
 interface Body extends TurnOptions {
   agentId: string;
+  attachments?: Attachment[];
   /** Set when the turn goes to a provider rather than a CLI: `openrouter` + a model id. */
   providerId?: string;
   history?: ChatMessage[];
@@ -31,6 +39,13 @@ export async function POST(req: Request) {
   const def = agent(body.agentId);
   if (!def) return Response.json({ error: `unknown model: ${body.agentId}` }, { status: 400 });
 
+  // A CLI is an agent with filesystem access, so an attachment is named by its path and
+  // opened by the model itself — full resolution, whatever tool suits it, and it survives
+  // the resume of a later turn in a way an inlined blob would not.
+  const attached = (body.attachments ?? []).slice(0, 8);
+  const paths = attached.map((a) => `[${a.kind}: ${a.path}]`).join("\n");
+  const prompt = paths ? `${paths}\n\n${body.prompt}` : body.prompt;
+
   const bin = resolveBin(def.bin);
   if (!bin) {
     return Response.json(
@@ -39,7 +54,7 @@ export async function POST(req: Request) {
     );
   }
 
-  return sseSpawn(bin, buildArgs(def, body), { cwd: body.cwd });
+  return sseSpawn(bin, buildArgs(def, { ...body, prompt }), { cwd: body.cwd });
 }
 
 const encoder = new TextEncoder();
@@ -62,7 +77,26 @@ function providerTurn(body: Body, signal: AbortSignal): Response {
   }
 
   messages.push(...(body.history ?? []).slice(-20));
-  messages.push({ role: "user", content: body.prompt });
+
+  // A provider has no disk to read from, so an image travels as data and everything else
+  // travels as a note that a file exists — which is honest, and better than pretending it
+  // was sent.
+  const attached = (body.attachments ?? []).slice(0, 8);
+  const images = attached.filter((a) => a.kind === "image" && a.dataUrl);
+  const others = attached.filter((a) => !images.includes(a));
+  const note = others.length ? `\n\n(attached, not readable by this provider: ${others.map((a) => a.name).join(", ")})` : "";
+
+  if (images.length) {
+    messages.push({
+      role: "user",
+      content: [
+        { type: "text", text: `${body.prompt}${note}` },
+        ...images.map((a) => ({ type: "image_url" as const, image_url: { url: a.dataUrl as string } })),
+      ],
+    });
+  } else {
+    messages.push({ role: "user", content: `${body.prompt}${note}` });
+  }
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {

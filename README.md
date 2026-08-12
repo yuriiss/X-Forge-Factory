@@ -9,8 +9,8 @@ treats credits like money.**
 [![license](https://img.shields.io/badge/license-AGPL--3.0-3d4757?style=flat-square)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.5-4ade80?style=flat-square)](https://nodejs.org)
 [![next](https://img.shields.io/badge/Next.js-16-0d1322?style=flat-square)](https://nextjs.org)
-[![tests](https://img.shields.io/badge/tests-82%20passing-4ade80?style=flat-square)](#tests)
-[![guidebook](https://img.shields.io/badge/guidebook-30%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
+[![tests](https://img.shields.io/badge/tests-90%20passing-4ade80?style=flat-square)](#tests)
+[![guidebook](https://img.shields.io/badge/guidebook-31%20pages-e8b64c?style=flat-square)](GUIDEBOOK.md)
 [![languages](https://img.shields.io/badge/languages-EN%20%C2%B7%20UA-7fd4cb?style=flat-square)](GUIDEBOOK.uk.md)
 
 <img src="docs/images/dashboard.png" alt="X-Forge dashboard" width="100%">
@@ -56,7 +56,7 @@ Nothing in the console is mocked. Every panel is reading something.
 
 | | Screen | What it actually does |
 |---|---|---|
-| ◈ | **Chat** | The coding CLIs installed on this machine — Claude, Grok, Kimi, Qwen, Codex — plus any OpenAI-shaped provider, with skills and a scanner that reads them first |
+| ◈ | **Chat** | The coding CLIs installed on this machine — Claude, Grok, Kimi, Qwen, Codex — plus any OpenAI-shaped provider. Attach a picture, get a prompt, send it to a generator with one button. Skills pass a scanner first |
 | ▦ | **Dashboard** | Live balance, the console's own rate meters, the job table, service health, vault thumbnails |
 | ✦ | **Image Forge** | Mystic, FLUX and Seedream with their full parameter sets; the whole 48-model catalogue over MCP |
 | ▶ | **Video Forge** | 52 models, text- and image-to-video, a free planning pass, per-model pricing before you commit |
@@ -208,9 +208,9 @@ tests/            unit · api · e2e
 | | |
 |---|---|
 | [`GUIDEBOOK.md`](GUIDEBOOK.md) | Every screen and control, with screenshots — 22 sections |
-| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 30 pages |
+| [`docs/X-Forge-Guidebook.pdf`](docs/X-Forge-Guidebook.pdf) | The same, typeset for print — 31 pages |
 | [`GUIDEBOOK.uk.md`](GUIDEBOOK.uk.md) | Те саме українською — 22 розділи |
-| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 31 сторінка |
+| [`docs/X-Forge-Guidebook-UK.pdf`](docs/X-Forge-Guidebook-UK.pdf) | Українською, для друку — 32 сторінки |
 | [`CHANGELOG.md`](CHANGELOG.md) | What shipped, and when |
 | [`.env.example`](.env.example) | Every setting, explained |
 

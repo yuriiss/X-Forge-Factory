@@ -1,7 +1,8 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useState } from "react";
+import { collect } from "@/lib/handoff";
+import { useEffect, useState } from "react";
 import { Field, JobResult, Seg, useEstimate, useExample, useJobRunner, useJson, useToast } from "../ui";
 
 /**
@@ -34,6 +35,15 @@ export default function IconFoundry() {
   const [term, setTerm] = useState("anchor");
 
   const icons = useJson<{ items: IconItem[] }>(`/api/stock?type=icons&q=${encodeURIComponent(term)}&limit=24`, { deps: [term] });
+
+  useEffect(() => {
+    const handoff = collect("icon-foundry");
+    if (handoff) {
+      setPrompt(handoff.prompt);
+      toast.push("ok", t("Prompt received from {from}", { from: handoff.from }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const params = { prompt: `${prompt}, ${style} style`, style };
   const est = useEstimate("icon.generate", params, !!prompt.trim());
 

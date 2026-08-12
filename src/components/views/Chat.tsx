@@ -3,21 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { readEvent, type ChatEvent } from "@/lib/chatEvents";
-import { useJson, useToast } from "../ui";
+import { stash, TARGETS } from "@/lib/handoff";
+import { useNav } from "../Console";
+import { bytes as humanBytes, useJson, useToast } from "../ui";
 import SkillPicker from "../SkillPicker";
 
 /**
  * Chat.
  *
- * The models here are not Magnific's — they are the coding CLIs already installed on this
- * machine, each holding its own credentials, plus any OpenAI-shaped provider with a key in
- * `.env.local`. Nothing in this view spends Magnific credits, which is why it has no
- * estimate, no reservation and no approval gate: the console is not paying, the CLI's own
- * account is.
+ * One conversation with a model selector, not one conversation per model. The models are
+ * not Magnific's — they are the coding CLIs already installed on this machine, each holding
+ * its own credentials, plus any OpenAI-shaped provider with a key in `.env.local`. Nothing
+ * here spends Magnific credits, which is why there is no estimate, no reservation and no
+ * approval gate: the console is not paying, the CLI's own account is.
  *
- * The transcript lives in this browser. The CLI keeps its own, far better record on disk
- * and can be resumed from it by id, so duplicating that into the engine's database would
- * mean maintaining a worse copy of something the CLI already owns.
+ * The transcript lives in this browser and the CLI keeps its own, better one on disk; the
+ * console resumes that by id rather than maintaining a worse copy. Because those session
+ * ids belong to one CLI each, they are kept per model — switch to Grok and back, and Claude
+ * picks up where it was, while Grok is handed a short recap so a switch mid-conversation
+ * does not read as amnesia.
  */
 
 interface CliAgent {
@@ -41,12 +45,29 @@ interface ProviderInfo {
   configured: boolean;
 }
 
-type Block = { kind: "text"; text: string; streaming?: boolean } | { kind: "tool"; id?: string; name: string; input?: string; done?: boolean };
+interface Choice {
+  id: string;
+  provider: boolean;
+  model?: string;
+}
+
+interface Attachment {
+  name: string;
+  path: string;
+  kind: string;
+  bytes: number;
+  dataUrl?: string;
+}
+
+type Block =
+  | { kind: "text"; text: string; streaming?: boolean }
+  | { kind: "tool"; id?: string; name: string; input?: string; done?: boolean };
 
 interface Msg {
   role: "user" | "assistant" | "system";
   at: number;
   blocks: Block[];
+  files?: { name: string; kind: string }[];
 }
 
 interface Turn {
@@ -60,107 +81,170 @@ interface Turn {
 const EFFORTS = ["", "low", "medium", "high", "xhigh", "max"];
 const PERMISSIONS = ["default", "acceptEdits", "plan", "bypassPermissions"];
 
-const transcriptKey = (id: string) => `x-forge.chat.${id}`;
+const TRANSCRIPT = "x-forge.chat.transcript";
+const SESSIONS = "x-forge.chat.sessions";
 const skillsKey = (id: string) => `x-forge.skills.${id}`;
 
 export default function Chat() {
   const t = useT();
   const toast = useToast();
+  const { go } = useNav();
   const fleet = useJson<{ cli: CliAgent[]; providers: ProviderInfo[] }>("/api/chat/agents", { intervalMs: 30_000 });
+  const saved = useJson<{ choice: Choice }>("/api/chat/settings");
 
-  const [agentId, setAgentId] = useState("claude");
-  const [providerId, setProviderId] = useState<string | null>(null);
-  const [model, setModel] = useState("");
+  const [choice, setChoice] = useState<Choice>({ id: "claude", provider: false });
   const [effort, setEffort] = useState("");
   const [permission, setPermission] = useState("default");
   const [cwd, setCwd] = useState("");
 
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
+  const [files, setFiles] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [running, setRunning] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<Record<string, string>>({});
   const [turn, setTurn] = useState<Turn | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [providerModels, setProviderModels] = useState<{ id: string; label: string }[]>([]);
 
   const abort = useRef<AbortController | null>(null);
   const log = useRef<HTMLDivElement | null>(null);
+  const filePick = useRef<HTMLInputElement | null>(null);
 
   const cli = fleet.data?.cli ?? [];
   const providers = fleet.data?.providers ?? [];
-  const active = cli.find((a) => a.id === agentId);
+  const active = choice.provider ? undefined : cli.find((a) => a.id === choice.id);
+  const activeProvider = choice.provider ? providers.find((p) => p.id === choice.id) : undefined;
   const dialect = active?.id === "codex" ? "codex" : active?.id === "grok" ? "grok" : active?.id === "qwen" ? "qwen" : "claude";
+  const title = activeProvider?.label ?? active?.label ?? choice.id;
+  const sessionId = sessions[choice.id];
 
-  /* The transcript and the skill selection belong to the model, not to the console: switching
-     to Grok and back should find the Claude conversation where it was left. */
+  // The server holds the choice, so it is the same model in every tab and after a restart.
+  useEffect(() => {
+    if (saved.data?.choice) setChoice(saved.data.choice);
+  }, [saved.data]);
+
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(transcriptKey(providerId ?? agentId));
-      const parsed = saved ? (JSON.parse(saved) as { msgs: Msg[]; sessionId: string | null }) : null;
-      setMsgs(parsed?.msgs ?? []);
-      setSessionId(parsed?.sessionId ?? null);
-      setSkills(JSON.parse(window.localStorage.getItem(skillsKey(agentId)) ?? "[]") as string[]);
+      const parsed = JSON.parse(window.localStorage.getItem(TRANSCRIPT) ?? "null") as Msg[] | null;
+      setMsgs(parsed ?? []);
+      setSessions(JSON.parse(window.localStorage.getItem(SESSIONS) ?? "{}") as Record<string, string>);
     } catch {
       setMsgs([]);
-      setSessionId(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      setSkills(JSON.parse(window.localStorage.getItem(skillsKey(choice.id)) ?? "[]") as string[]);
+    } catch {
       setSkills([]);
     }
-    setTurn(null);
-  }, [agentId, providerId]);
+  }, [choice.id]);
 
   useEffect(() => {
     if (!msgs.length) return;
     try {
-      window.localStorage.setItem(transcriptKey(providerId ?? agentId), JSON.stringify({ msgs: msgs.slice(-200), sessionId }));
+      window.localStorage.setItem(TRANSCRIPT, JSON.stringify(msgs.slice(-200)));
     } catch {
       /* a full quota should not take the conversation down with it */
     }
-  }, [msgs, sessionId, agentId, providerId]);
+  }, [msgs]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SESSIONS, JSON.stringify(sessions));
+    } catch {
+      /* the session map is a convenience; the CLI still has its own transcript */
+    }
+  }, [sessions]);
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight, behavior: "smooth" });
   }, [msgs, turn]);
 
   useEffect(() => {
-    if (!providerId) {
+    if (!choice.provider) {
       setProviderModels([]);
       return;
     }
     let live = true;
-    void fetch(`/api/providers?models=${encodeURIComponent(providerId)}`)
+    void fetch(`/api/providers?models=${encodeURIComponent(choice.id)}`)
       .then((r) => r.json() as Promise<{ models?: { id: string; label: string }[]; error?: string }>)
       .then((r) => {
         if (!live) return;
         setProviderModels(r.models ?? []);
-        if (r.models?.length) setModel((m) => m || r.models![0].id);
         if (r.error) toast.push("err", r.error);
       })
       .catch(() => undefined);
     return () => {
       live = false;
     };
-  }, [providerId, toast]);
+  }, [choice.provider, choice.id, toast]);
+
+  const pick = useCallback(
+    async (next: Choice) => {
+      setChoice(next);
+      setTurn(null);
+      try {
+        await fetch("/api/chat/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(next),
+        });
+      } catch {
+        /* the choice still applies to this tab; the server copy catches up next time */
+      }
+    },
+    [],
+  );
 
   const chooseSkills = useCallback(
     (next: string[]) => {
       setSkills(next);
       try {
-        window.localStorage.setItem(skillsKey(agentId), JSON.stringify(next));
+        window.localStorage.setItem(skillsKey(choice.id), JSON.stringify(next));
       } catch {
         /* the selection is a convenience, not state worth failing over */
       }
     },
-    [agentId],
+    [choice.id],
   );
 
-  /** Apply one normalised event to the transcript. */
-  const apply = useCallback((event: ChatEvent) => {
+  const attach = useCallback(
+    async (list: FileList | null) => {
+      if (!list?.length) return;
+      setUploading(true);
+      for (const file of Array.from(list).slice(0, 8)) {
+        try {
+          const form = new FormData();
+          form.append("file", file);
+          const res = await fetch("/api/chat/upload", { method: "POST", body: form });
+          const json = (await res.json()) as Attachment & { error?: string };
+          if (json.error) toast.push("err", json.error);
+          else setFiles((prev) => [...prev, json]);
+        } catch (e) {
+          toast.push("err", (e as Error).message);
+        }
+      }
+      setUploading(false);
+    },
+    [toast],
+  );
+
+  const apply = useCallback((event: ChatEvent, model: string) => {
     if (event.kind === "session") {
-      setSessionId(event.id);
+      setSessions((prev) => ({ ...prev, [model]: event.id }));
       return;
     }
     if (event.kind === "result") {
-      setTurn({ costUsd: event.costUsd, durationMs: event.durationMs, inputTokens: event.inputTokens, outputTokens: event.outputTokens, failed: event.failed });
+      setTurn({
+        costUsd: event.costUsd,
+        durationMs: event.durationMs,
+        inputTokens: event.inputTokens,
+        outputTokens: event.outputTokens,
+        failed: event.failed,
+      });
       return;
     }
     if (event.kind === "exit") return;
@@ -174,9 +258,7 @@ export default function Chat() {
         return next;
       }
 
-      if (!last || last.role !== "assistant") {
-        next.push({ role: "assistant", at: Date.now(), blocks: [] });
-      }
+      if (!last || last.role !== "assistant") next.push({ role: "assistant", at: Date.now(), blocks: [] });
       const target = next[next.length - 1];
       const blocks = [...target.blocks];
 
@@ -185,8 +267,8 @@ export default function Chat() {
         if (tail?.kind === "text" && tail.streaming) blocks[blocks.length - 1] = { ...tail, text: tail.text + event.text };
         else blocks.push({ kind: "text", text: event.text, streaming: true });
       } else if (event.kind === "tool") {
-        // The chip is created by the stream and completed by the final message, so an
-        // arriving tool with a known id updates rather than duplicates.
+        // The chip is opened by the stream and completed by the final message, so a tool
+        // arriving with a known id updates rather than duplicates.
         const at = blocks.findIndex((b) => b.kind === "tool" && b.id && b.id === event.id);
         const chip: Block = { kind: "tool", id: event.id, name: event.name, input: event.input };
         if (at >= 0) blocks[at] = { ...blocks[at], ...chip };
@@ -208,47 +290,64 @@ export default function Chat() {
 
   const send = useCallback(async () => {
     const text = draft.trim();
-    if (!text || running) return;
+    if ((!text && !files.length) || running) return;
 
+    const sending = files;
     setDraft("");
+    setFiles([]);
     setTurn(null);
-    setMsgs((prev) => [...prev, { role: "user", at: Date.now(), blocks: [{ kind: "text", text }] }]);
+    setMsgs((prev) => [
+      ...prev,
+      { role: "user", at: Date.now(), blocks: [{ kind: "text", text }], files: sending.map((f) => ({ name: f.name, kind: f.kind })) },
+    ]);
     setRunning(true);
 
+    const model = choice.id;
     const controller = new AbortController();
     abort.current = controller;
+
+    const plain = (m: Msg) => m.blocks.filter((b) => b.kind === "text").map((b) => (b as { text: string }).text).join("");
 
     try {
       const history = msgs
         .filter((m) => m.role !== "system")
         .slice(-20)
-        .map((m) => ({
-          role: m.role === "user" ? ("user" as const) : ("assistant" as const),
-          content: m.blocks.filter((b) => b.kind === "text").map((b) => (b as { text: string }).text).join(""),
-        }))
+        .map((m) => ({ role: m.role === "user" ? ("user" as const) : ("assistant" as const), content: plain(m) }))
         .filter((m) => m.content.trim());
+
+      // A CLI that has no session for this conversation yet has no idea what was said
+      // before it was picked. Handing it a short recap is what makes one chat behave like
+      // one chat when the model is switched halfway through.
+      const needsRecap = !choice.provider && !sessions[model] && history.length > 0;
+      const recap = needsRecap
+        ? `Earlier in this conversation:\n${history
+            .slice(-6)
+            .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content.slice(0, 600)}`)
+            .join("\n")}\n\n---\n\n`
+        : "";
 
       const res = await fetch("/api/chat/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          agentId,
-          providerId: providerId ?? undefined,
-          prompt: text,
-          model: model || undefined,
-          sessionId: providerId ? undefined : sessionId ?? undefined,
+          agentId: choice.provider ? "claude" : model,
+          providerId: choice.provider ? model : undefined,
+          prompt: `${recap}${text}`,
+          model: choice.model || undefined,
+          sessionId: choice.provider ? undefined : sessions[model],
           effort: effort || undefined,
           permission,
           skills,
           cwd: cwd || undefined,
-          history: providerId ? history : undefined,
+          attachments: sending,
+          history: choice.provider ? history : undefined,
         }),
       });
 
       if (!res.ok && res.headers.get("content-type")?.includes("application/json")) {
         const json = (await res.json()) as { error?: string };
-        apply({ kind: "error", message: json.error ?? `the server answered ${res.status}` });
+        apply({ kind: "error", message: json.error ?? `the server answered ${res.status}` }, model);
         return;
       }
       if (!res.body) throw new Error("no stream came back");
@@ -267,7 +366,7 @@ export default function Chat() {
           for (const line of frame.split("\n")) {
             if (!line.startsWith("data: ")) continue;
             try {
-              for (const event of readEvent(dialect, JSON.parse(line.slice(6)) as Record<string, unknown>)) apply(event);
+              for (const event of readEvent(dialect, JSON.parse(line.slice(6)) as Record<string, unknown>)) apply(event, model);
             } catch {
               /* a half-delivered frame is not an error worth showing */
             }
@@ -275,7 +374,7 @@ export default function Chat() {
         }
       }
     } catch (e) {
-      if ((e as Error).name !== "AbortError") apply({ kind: "error", message: (e as Error).message });
+      if ((e as Error).name !== "AbortError") apply({ kind: "error", message: (e as Error).message }, model);
     } finally {
       setRunning(false);
       abort.current = null;
@@ -285,22 +384,28 @@ export default function Chat() {
         ),
       );
     }
-  }, [draft, running, msgs, agentId, providerId, model, sessionId, effort, permission, skills, cwd, dialect, apply]);
+  }, [draft, files, running, msgs, choice, sessions, effort, permission, skills, cwd, dialect, apply]);
 
   const newChat = () => {
     abort.current?.abort();
     setMsgs([]);
-    setSessionId(null);
+    setSessions({});
     setTurn(null);
     try {
-      window.localStorage.removeItem(transcriptKey(providerId ?? agentId));
+      window.localStorage.removeItem(TRANSCRIPT);
+      window.localStorage.removeItem(SESSIONS);
     } catch {
       /* nothing to clean up */
     }
   };
 
-  const models = providerId ? providerModels.map((m) => m.id) : active?.models ?? [""];
-  const title = providerId ? providers.find((p) => p.id === providerId)?.label ?? providerId : active?.label ?? agentId;
+  const push = (view: string, prompt: string, label: string) => {
+    stash(view, { prompt, from: title });
+    toast.push("ok", t("Sent to {label}", { label }));
+    go(view);
+  };
+
+  const models = choice.provider ? providerModels.map((m) => m.id) : active?.models ?? [""];
 
   return (
     <>
@@ -312,98 +417,131 @@ export default function Chat() {
           </div>
         </div>
         <div className="topbar-spacer" />
+        <ModelChooser cli={cli} providers={providers} choice={choice} onPick={pick} />
         <button className="chip" onClick={newChat}>
           {t("+ NEW CHAT")}
         </button>
       </div>
 
       <div className="chat-layout">
-        <div style={{ display: "flex", gap: 10, minWidth: 0 }}>
-          <ModelRail
-            cli={cli}
-            providers={providers}
-            agentId={agentId}
-            providerId={providerId}
-            onPickCli={(id) => {
-              setProviderId(null);
-              setAgentId(id);
-              setModel("");
-            }}
-            onPickProvider={(id) => {
-              setProviderId(id);
-              setModel("");
-            }}
-          />
+        <div className="panel" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div className="panel-head">
+            <span
+              className="avatar"
+              style={{ background: activeProvider ? "var(--accent)" : active?.colour ?? "var(--accent)", width: 22, height: 22, fontSize: 11 }}
+            >
+              {activeProvider ? "⇉" : active?.glyph ?? "◆"}
+            </span>
+            <span className="panel-title">{title}</span>
+            <span className="tag">{activeProvider ? t("provider · your key") : active?.kind ?? ""}</span>
+            <span style={{ flex: 1 }} />
+            {!choice.provider && active?.skillsDir ? <SkillPicker agentId={choice.id} selected={skills} onChange={chooseSkills} /> : null}
+            {sessionId ? <span className="tag mono">{sessionId.slice(0, 8)}</span> : null}
+          </div>
 
-          <div className="panel" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-            <div className="panel-head">
-              <span className="avatar" style={{ background: active?.colour ?? "var(--accent)", width: 22, height: 22, fontSize: 11 }}>
-                {providerId ? "⇉" : active?.glyph ?? "◆"}
-              </span>
-              <span className="panel-title">{title}</span>
-              <span className="tag">{providerId ? t("provider · your key") : active?.kind ?? ""}</span>
-              <span style={{ flex: 1 }} />
-              {!providerId && active?.skillsDir ? (
-                <SkillPicker agentId={agentId} selected={skills} onChange={chooseSkills} />
-              ) : null}
-              {sessionId ? <span className="tag mono">{sessionId.slice(0, 8)}</span> : null}
-            </div>
-
-            <div className="chat-log" ref={log} style={{ minHeight: 380, maxHeight: "calc(100vh - 330px)", overflowY: "auto" }}>
-              {msgs.length === 0 ? (
-                <div className="empty-state" style={{ margin: "auto", textAlign: "center" }}>
-                  <div className="empty-symbols" style={{ fontSize: 30, color: active?.colour ?? "var(--accent)" }}>
-                    {providerId ? "⇉" : active?.glyph ?? "◆"}
-                  </div>
-                  <div className="empty-title">{t("Talk to {name}", { name: title })}</div>
-                  <div className="hint" style={{ maxWidth: 420, margin: "6px auto 0" }}>
-                    {providerId
-                      ? t("This runs over your provider key and is billed by them, not by Magnific.")
-                      : t("This runs the CLI already installed on this machine, with its own sign-in and its own transcript.")}
-                  </div>
+          <div className="chat-log" ref={log} style={{ minHeight: 360, maxHeight: "calc(100vh - 340px)", overflowY: "auto" }}>
+            {msgs.length === 0 ? (
+              <div className="empty-state" style={{ margin: "auto", textAlign: "center" }}>
+                <div className="empty-symbols" style={{ fontSize: 30, color: active?.colour ?? "var(--accent)" }}>
+                  {activeProvider ? "⇉" : active?.glyph ?? "◆"}
                 </div>
-              ) : (
-                msgs.map((m, i) => <Message key={`${m.at}-${i}`} msg={m} colour={active?.colour} glyph={providerId ? "⇉" : active?.glyph} />)
-              )}
-              {turn ? <ResultBar turn={turn} /> : null}
-            </div>
-
-            <div className="panel-foot" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {skills.length ? (
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {skills.map((s) => (
-                    <button key={s} className="chip active" style={{ fontSize: 8.5 }} onClick={() => chooseSkills(skills.filter((x) => x !== s))}>
-                      ⚡ {s} ✕
-                    </button>
-                  ))}
+                <div className="empty-title">{t("Talk to {name}", { name: title })}</div>
+                <div className="hint" style={{ maxWidth: 430, margin: "6px auto 0" }}>
+                  {activeProvider
+                    ? t("This runs over your provider key and is billed by them, not by Magnific.")
+                    : t("This runs the CLI already installed on this machine, with its own sign-in and its own transcript.")}
                 </div>
-              ) : null}
-              <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                <textarea
-                  className="composer"
-                  rows={Math.min(6, Math.max(1, draft.split("\n").length))}
-                  placeholder={t("Message {name}…", { name: title })}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void send();
-                    }
-                  }}
-                />
-                {running ? (
-                  <button className="btn" onClick={() => abort.current?.abort()}>
-                    {t("◼ STOP")}
-                  </button>
-                ) : (
-                  <button className="btn primary" disabled={!draft.trim()} onClick={() => void send()}>
-                    {t("↑ SEND")}
-                  </button>
-                )}
               </div>
-              <div className="hint">{t("Enter sends · Shift+Enter starts a new line · closing this view stops the turn")}</div>
+            ) : (
+              msgs.map((m, i) => (
+                <Message
+                  key={`${m.at}-${i}`}
+                  msg={m}
+                  colour={active?.colour}
+                  glyph={activeProvider ? "⇉" : active?.glyph}
+                  onPush={push}
+                />
+              ))
+            )}
+            {turn ? <ResultBar turn={turn} /> : null}
+          </div>
+
+          <div className="panel-foot" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {skills.length ? (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {skills.map((s) => (
+                  <button key={s} className="chip active" style={{ fontSize: 8.5 }} onClick={() => chooseSkills(skills.filter((x) => x !== s))}>
+                    ⚡ {s} ✕
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {files.length ? (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {files.map((f, i) => (
+                  <button
+                    key={`${f.path}-${i}`}
+                    className="chip"
+                    style={{ fontSize: 8.5 }}
+                    onClick={() => setFiles(files.filter((_, at) => at !== i))}
+                    title={f.path}
+                  >
+                    📎 {f.name} · {humanBytes(f.bytes)} ✕
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <input
+                ref={filePick}
+                type="file"
+                multiple
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  void attach(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <button className="btn" title={t("Attach a file")} disabled={uploading} onClick={() => filePick.current?.click()}>
+                {uploading ? "◷" : "⊕"}
+              </button>
+              <textarea
+                className="composer"
+                rows={Math.min(6, Math.max(1, draft.split("\n").length))}
+                placeholder={t("Message {name}…", { name: title })}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onPaste={(e) => {
+                  // A screenshot in the clipboard is the commonest attachment there is, and
+                  // making somebody save it to disk first to send it is a step for nothing.
+                  const pasted = Array.from(e.clipboardData.files);
+                  if (pasted.length) {
+                    e.preventDefault();
+                    const bag = new DataTransfer();
+                    for (const f of pasted) bag.items.add(f);
+                    void attach(bag.files);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+              />
+              {running ? (
+                <button className="btn" onClick={() => abort.current?.abort()}>
+                  {t("◼ STOP")}
+                </button>
+              ) : (
+                <button className="btn primary" disabled={!draft.trim() && !files.length} onClick={() => void send()}>
+                  {t("↑ SEND")}
+                </button>
+              )}
             </div>
+            <div className="hint">{t("Enter sends · Shift+Enter starts a new line · paste or attach an image and ask about it")}</div>
           </div>
         </div>
 
@@ -416,7 +554,7 @@ export default function Chat() {
             <div className="panel-body" style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               <div>
                 <div className="label">{t("MODEL")}</div>
-                <select className="select" value={model} onChange={(e) => setModel(e.target.value)}>
+                <select className="select" value={choice.model ?? ""} onChange={(e) => void pick({ ...choice, model: e.target.value })}>
                   {(models.length ? models : [""]).map((m) => (
                     <option key={m} value={m}>
                       {m || t("default — the CLI decides")}
@@ -425,7 +563,7 @@ export default function Chat() {
                 </select>
               </div>
 
-              {!providerId && active?.supports.effort ? (
+              {!choice.provider && active?.supports.effort ? (
                 <div>
                   <div className="label">{t("EFFORT")}</div>
                   <select className="select" value={effort} onChange={(e) => setEffort(e.target.value)}>
@@ -438,7 +576,7 @@ export default function Chat() {
                 </div>
               ) : null}
 
-              {!providerId && active?.supports.permission ? (
+              {!choice.provider && active?.supports.permission ? (
                 <div>
                   <div className="label">{t("PERMISSIONS")}</div>
                   <select className="select" value={permission} onChange={(e) => setPermission(e.target.value)}>
@@ -454,7 +592,7 @@ export default function Chat() {
                 </div>
               ) : null}
 
-              {!providerId ? (
+              {!choice.provider ? (
                 <div>
                   <div className="label">{t("WORKING DIRECTORY")}</div>
                   <div className="field">
@@ -497,7 +635,7 @@ export default function Chat() {
             </div>
           </div>
 
-          {active && !active.available && !providerId ? (
+          {active && !active.available && !choice.provider ? (
             <div className="panel">
               <div className="panel-head">
                 <span className="dot red" />
@@ -505,7 +643,7 @@ export default function Chat() {
               </div>
               <div className="panel-body">
                 <div className="hint">
-                  {t("The {bin} command is not on this machine's PATH. Install it, or pick another model.", { bin: active.id })}
+                  {t("The {bin} command is not on this machine's PATH. Install it, or pick another model.", { bin: choice.id })}
                 </div>
               </div>
             </div>
@@ -516,61 +654,153 @@ export default function Chat() {
   );
 }
 
-function ModelRail({
+/**
+ * The model selector.
+ *
+ * One control for both kinds, because from where the operator sits they are the same
+ * decision: which model answers. The availability light is the same one the settings panel
+ * uses, and an unreachable model stays on the list rather than disappearing — a model going
+ * quiet must never look like the console silently reassigned the choice.
+ */
+function ModelChooser({
   cli,
   providers,
-  agentId,
-  providerId,
-  onPickCli,
-  onPickProvider,
+  choice,
+  onPick,
 }: {
   cli: CliAgent[];
   providers: ProviderInfo[];
-  agentId: string;
-  providerId: string | null;
-  onPickCli: (id: string) => void;
-  onPickProvider: (id: string) => void;
+  choice: Choice;
+  onPick: (c: Choice) => void;
 }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement | null>(null);
+
+  const current = choice.provider ? providers.find((p) => p.id === choice.id) : cli.find((a) => a.id === choice.id);
+  const label = current?.label ?? choice.id;
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
   return (
-    <div className="tool-picker model-rail">
-      {cli.map((a) => (
-        <div
-          key={a.id}
-          className={`tool-pick ${!providerId && agentId === a.id ? "active" : ""}`}
-          style={{ color: !providerId && agentId === a.id ? a.colour : a.available ? "var(--text-3)" : "var(--dim)" }}
-          onClick={() => onPickCli(a.id)}
-          role="button"
-          tabIndex={0}
-          title={a.available ? a.where ?? "" : t("not installed")}
-        >
-          <span>{a.glyph}</span>
-          <span>{a.label}</span>
-          <span className={`dot ${a.available ? "green" : "red"}`} style={{ marginTop: 2 }} />
+    <div className="lang-picker" ref={box}>
+      <button className="chip active" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open}>
+        <span className="dim" style={{ fontSize: 7.5, letterSpacing: 1, marginRight: 6 }}>
+          {t("MODEL")}
+        </span>
+        {label} <span className={`lang-caret ${open ? "up" : ""}`}>⌄</span>
+      </button>
+
+      {open ? (
+        <div className="model-menu" role="listbox">
+          <div className="eyebrow" style={{ padding: "4px 8px" }}>
+            {t("INSTALLED ON THIS MACHINE")}
+          </div>
+          {cli.map((a) => (
+            <Row
+              key={a.id}
+              glyph={a.glyph}
+              colour={a.colour}
+              label={a.label}
+              sub={a.available ? a.kind : t("not installed")}
+              on={a.available}
+              active={!choice.provider && choice.id === a.id}
+              onClick={() => {
+                onPick({ id: a.id, provider: false });
+                setOpen(false);
+              }}
+            />
+          ))}
+          <div className="eyebrow" style={{ padding: "8px 8px 4px" }}>
+            {t("PROVIDERS")}
+          </div>
+          {providers.map((p) => (
+            <Row
+              key={p.id}
+              glyph="⇉"
+              colour="var(--accent)"
+              label={p.label}
+              sub={p.configured ? t("your key") : t("no key")}
+              on={p.configured}
+              active={choice.provider && choice.id === p.id}
+              onClick={() => {
+                onPick({ id: p.id, provider: true });
+                setOpen(false);
+              }}
+            />
+          ))}
         </div>
-      ))}
-      {providers.map((p) => (
-        <div
-          key={p.id}
-          className={`tool-pick ${providerId === p.id ? "active" : ""}`}
-          style={{ color: providerId === p.id ? "var(--accent)" : p.configured ? "var(--text-3)" : "var(--dim)" }}
-          onClick={() => onPickProvider(p.id)}
-          role="button"
-          tabIndex={0}
-          title={p.base}
-        >
-          <span>⇉</span>
-          <span>{p.label}</span>
-          <span className={`dot ${p.configured ? "green" : "red"}`} style={{ marginTop: 2 }} />
-        </div>
-      ))}
+      ) : null}
     </div>
   );
 }
 
-function Message({ msg, colour, glyph }: { msg: Msg; colour?: string; glyph?: string }) {
+function Row({
+  glyph,
+  colour,
+  label,
+  sub,
+  on,
+  active,
+  onClick,
+}: {
+  glyph: string;
+  colour: string;
+  label: string;
+  sub: string;
+  on: boolean;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button className={`model-option ${active ? "active" : ""}`} onClick={onClick} role="option" aria-selected={active}>
+      <span className="avatar" style={{ background: colour, width: 20, height: 20, fontSize: 10 }}>
+        {glyph}
+      </span>
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b>{label}</b>
+        <span className="dim" style={{ display: "block", fontSize: 9 }}>
+          {sub}
+        </span>
+      </span>
+      <span className={`dot ${on ? "green" : "red"}`} />
+      <span className="lang-tick">{active ? "✓" : ""}</span>
+    </button>
+  );
+}
+
+function Message({
+  msg,
+  colour,
+  glyph,
+  onPush,
+}: {
+  msg: Msg;
+  colour?: string;
+  glyph?: string;
+  onPush: (view: string, prompt: string, label: string) => void;
+}) {
   const t = useT();
   const who = msg.role === "user" ? t("YOU") : msg.role === "system" ? t("CONSOLE") : t("MODEL");
+  const text = msg.blocks
+    .filter((b) => b.kind === "text")
+    .map((b) => (b as { text: string }).text)
+    .join("")
+    .trim();
 
   return (
     <div className={`message ${msg.role === "user" ? "user" : ""}`}>
@@ -585,11 +815,87 @@ function Message({ msg, colour, glyph }: { msg: Msg; colour?: string; glyph?: st
           </span>
         ) : null}
         <div className="bubble" style={msg.role === "system" ? { borderColor: "var(--red)" } : undefined}>
+          {msg.files?.length ? (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+              {msg.files.map((f, i) => (
+                <span key={i} className="tag">
+                  📎 {f.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {msg.blocks.map((b, i) =>
-            b.kind === "text" ? <Prose key={i} text={b.text} streaming={b.streaming} /> : <ToolChip key={i} name={b.name} input={b.input} done={b.done} />,
+            b.kind === "text" ? (
+              <Prose key={i} text={b.text} streaming={b.streaming} />
+            ) : (
+              <ToolChip key={i} name={b.name} input={b.input} done={b.done} />
+            ),
           )}
         </div>
       </div>
+
+      {msg.role === "assistant" && text && !msg.blocks.some((b) => b.kind === "text" && b.streaming) ? (
+        <PushRow text={text} onPush={onPush} />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Sending an answer to a generator.
+ *
+ * The reason this exists: a model writes a prompt, and the next step was always to select
+ * it, copy it, open a generator and paste it. The button does that, and the fenced block is
+ * preferred over the prose around it — when a model is asked for a prompt it puts the prompt
+ * in a fence and the explanation outside, and the explanation is not what should be
+ * generated.
+ */
+function PushRow({ text, onPush }: { text: string; onPush: (view: string, prompt: string, label: string) => void }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+
+  const payload = useMemo(() => {
+    const fenced = text.match(/```[\w-]*\n([\s\S]*?)```/);
+    return (fenced ? fenced[1] : text).trim();
+  }, [text]);
+
+  return (
+    <div className="push-row">
+      {open ? (
+        <>
+          {TARGETS.map((target) => (
+            <button
+              key={target.view}
+              className="chip"
+              style={{ fontSize: 8.5 }}
+              onClick={() => {
+                onPush(target.view, payload, target.label);
+                setOpen(false);
+              }}
+            >
+              {target.glyph} {target.label}
+            </button>
+          ))}
+          <button className="chip" style={{ fontSize: 8.5 }} onClick={() => setOpen(false)}>
+            ✕
+          </button>
+        </>
+      ) : (
+        <>
+          <button className="chip" style={{ fontSize: 8.5 }} onClick={() => setOpen(true)}>
+            {t("→ USE AS PROMPT")}
+          </button>
+          <button
+            className="chip"
+            style={{ fontSize: 8.5 }}
+            onClick={() => {
+              void navigator.clipboard.writeText(payload);
+            }}
+          >
+            {t("⧉ COPY")}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -638,7 +944,11 @@ function ResultBar({ turn }: { turn: Turn }) {
       <span style={{ color: turn.failed ? "var(--red)" : "var(--green-text)" }}>{turn.failed ? t("✕ failed") : t("✓ done")}</span>
       {turn.costUsd !== undefined ? <span className="dim">${turn.costUsd.toFixed(4)}</span> : null}
       {turn.durationMs ? <span className="dim">{(turn.durationMs / 1000).toFixed(1)}s</span> : null}
-      {turn.outputTokens ? <span className="dim">{turn.outputTokens} {t("tokens out")}</span> : null}
+      {turn.outputTokens ? (
+        <span className="dim">
+          {turn.outputTokens} {t("tokens out")}
+        </span>
+      ) : null}
     </div>
   );
 }

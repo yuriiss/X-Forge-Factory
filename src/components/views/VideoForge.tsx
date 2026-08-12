@@ -1,7 +1,8 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useMemo, useState } from "react";
+import { collect } from "@/lib/handoff";
+import { useEffect, useMemo, useState } from "react";
 import { Dropzone, Field, JobResult, Seg, Toggle, postJson, useEstimate, useJobRunner, useJson, useToast, type Upload } from "../ui";
 import { useNav } from "../Console";
 import { redactBase64 } from "./ImageForge";
@@ -49,6 +50,15 @@ export default function VideoForge() {
   const catalog = useJson<Catalog>("/api/catalog");
   const models = catalog.data?.video ?? [];
   const chosen = models.find((m) => m.slug === slug);
+
+  useEffect(() => {
+    const handoff = collect("video-forge");
+    if (handoff) {
+      setPrompt(handoff.prompt);
+      toast.push("ok", t("Prompt received from {from}", { from: handoff.from }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The REST paths take base64 or a URL; the MCP tool takes a creation identifier. Which
   // one an upload needs depends on the path, so both forms are requested for the still.
